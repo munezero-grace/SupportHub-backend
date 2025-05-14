@@ -6,7 +6,6 @@ import app from "./index";
 import { prisma } from "./controllers/authController";
 
 beforeEach(async () => {
-  
   await prisma.userRoles.deleteMany();
   await prisma.users.deleteMany();
 });
@@ -23,33 +22,39 @@ describe("GET /", () => {
 });
 
 describe("POST /auth/google-signin", () => {
-  it("should create a new user with the client role if the user does not exist", async () => {
-    console.log("Testing user creation with client role...");
+  it("should create a new user with the client role and save provider details if the user does not exist", async () => {
     const response = await request(app).post("/auth/google-signin").send({
       email: "testuser@example.com",
       firstName: "Test",
       lastName: "User",
     });
 
-    console.log("Response:", response.body);
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("token");
     expect(response.body.user).toMatchObject({
       email: "testuser@example.com",
       firstName: "Test",
       lastName: "User",
+      provider: "google",
+      providerId: "google-id",
     });
+
+    const userInDb = await prisma.users.findUnique({
+      where: { email: "testuser@example.com" },
+    });
+    expect(userInDb).toBeTruthy();
+    expect(userInDb?.provider).toBe("google");
+    expect(userInDb?.providerId).toBe("google-id");
   });
 
-  it("should return an existing user if the user already exists", async () => {
-    console.log("Testing existing user retrieval...");
-
-
+  it("should return an existing user with provider details if the user already exists", async () => {
     await prisma.users.create({
       data: {
         email: "existinguser@example.com",
         firstName: "Existing",
         lastName: "User",
+        provider: "google",
+        providerId: "existing-google-id",
       },
     });
 
@@ -59,13 +64,14 @@ describe("POST /auth/google-signin", () => {
       lastName: "User",
     });
 
-    console.log("Response:", response.body);
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("token");
     expect(response.body.user).toMatchObject({
       email: "existinguser@example.com",
       firstName: "Existing",
       lastName: "User",
+      provider: "google",
+      providerId: "existing-google-id",
     });
   });
 });
