@@ -7,32 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Users {
-  id           String     @id @default(uuid())
-  firstName    String
-  lastName     String
-  email        String     @unique
-  password     String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  userRoles    UserRoles?
+  id         String     @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String     @unique
+  password   String?
+  provider   String?
+  providerId String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  userRoles  UserRoles?
 }
 
 model Roles {
-  id          Int   @id @default(autoincrement())
-  name        String     @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  userRoles   UserRoles []
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  userRoles UserRoles[]
 }
 
 model UserRoles {
   id        String   @id @default(uuid())
   userId    String   @unique
   roleId    Int
-  user      Users     @relation(fields: [userId], references: [id])
-  role      Roles     @relation(fields: [roleId], references: [id])
+  user      Users    @relation(fields: [userId], references: [id])
+  role      Roles    @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -20,9 +20,9 @@ async function main() {
       create: { name: 'super-admin' },
     }),
     prisma.roles.upsert({
-      where: { name: 'ticketmanager' },
+      where: { name: 'ticket-manager' },
       update: {},
-      create: { name: 'ticketmanager' }, 
+      create: { name: 'ticket-manager' }, 
     }),
     prisma.roles.upsert({
       where: { name: 'developer' },
@@ -72,7 +72,6 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
