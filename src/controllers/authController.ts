@@ -23,7 +23,6 @@ const assignClientRole = async (userId: string): Promise<void> => {
   });
 };
 
-
 export const signupWithEmail = async (
   req: Request,
   res: Response
@@ -45,7 +44,13 @@ export const signupWithEmail = async (
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.users.create({
-      data: { firstName, lastName, email, password: hashedPassword },
+      data: {
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        provider: "credentials",
+      },
     });
 
     await assignClientRole(user.id);
@@ -57,7 +62,6 @@ export const signupWithEmail = async (
     res.status(500).json({ message: "Signup failed", error: error.message });
   }
 };
-
 
 export const loginWithEmail = async (
   req: Request,
@@ -91,7 +95,6 @@ export const loginWithEmail = async (
   }
 };
 
-
 export const googleSignIn = async (
   req: Request,
   res: Response
@@ -121,7 +124,13 @@ export const googleSignIn = async (
     if (!user) {
       console.log("User not found. Creating a new user...");
       user = await prisma.users.create({
-        data: { email, firstName, lastName },
+        data: {
+          email,
+          firstName,
+          lastName,
+          provider: "google",
+          providerId: "google-id",
+        },
       });
       console.log("New user created:", user);
 
@@ -129,7 +138,7 @@ export const googleSignIn = async (
       console.log("Client role assigned to user with ID:", user.id);
     }
 
-    const token = generateToken(user.id); 
+    const token = generateToken(user.id);
     console.log("JWT token generated for user with ID:", user.id);
 
     res.status(200).json({ user, token });
