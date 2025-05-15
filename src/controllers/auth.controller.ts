@@ -8,7 +8,8 @@ import {
 } from "../validations/auth.validation";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
-import { AuthPayload } from "../types/auth.types";
+import { AuthPayload } from "../types/auth";
+import { HTTP_BAD_REQUEST, HTTP_CREATED, HTTP_EXIST, HTTP_OK, HTTP_SERVER_ERROR } from "../constants/httpStatusCodes";
 
 const prisma = new PrismaClient();
 
@@ -16,14 +17,14 @@ class AuthController {
   public async signup(req: Request, res: Response) {
     const { error } = signupValidation.validate(req.body);
     if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+      return res.status(HTTP_BAD_REQUEST).json({ message: error.details[0].message });
     }
     const { firstName, lastName, email, password } = req.body;
     try {
       const existingUser = await prisma.users.findUnique({ where: { email } });
       if (existingUser) {
         return res
-          .status(409)
+          .status(HTTP_EXIST)
           .json({ message: ERROR_MESSAGES.USER_ALREADY_EXISTS });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -40,11 +41,11 @@ class AuthController {
       };
       const token = generateToken(payload);
       return res
-        .status(201)
+        .status(HTTP_CREATED)
         .json({ user, token, message: SUCCESS_MESSAGES.USER_REGISTERED });
     } catch (err: any) {
       return res
-        .status(500)
+        .status(HTTP_SERVER_ERROR)
         .json({ message: ERROR_MESSAGES.SIGNUP_FAILED, error: err.message });
     }
   }
@@ -52,20 +53,20 @@ class AuthController {
   public async login(req: Request, res: Response) {
     const { error } = loginValidation.validate(req.body);
     if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+      return res.status(HTTP_BAD_REQUEST).json({ message: error.details[0].message });
     }
     const { email, password } = req.body;
     try {
       const user = await prisma.users.findUnique({ where: { email } });
       if (!user || !user.password) {
         return res
-          .status(400)
+          .status(HTTP_BAD_REQUEST)
           .json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
       }
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res
-          .status(400)
+          .status(HTTP_BAD_REQUEST)
           .json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
       }
       const userRole = await prisma.userRoles.findFirst({
@@ -83,11 +84,11 @@ class AuthController {
       };
       const token = generateToken(payload);
       return res
-        .status(200)
+        .status(HTTP_OK)
         .json({ user, token, message: SUCCESS_MESSAGES.LOGIN_SUCCESS });
     } catch (err: any) {
       return res
-        .status(500)
+        .status(HTTP_SERVER_ERROR)
         .json({ message: ERROR_MESSAGES.LOGIN_FAILED, error: err.message });
     }
   }
@@ -96,7 +97,7 @@ class AuthController {
     const { email, firstName, lastName } = req.body;
     if (!email || !firstName || !lastName) {
       return res
-        .status(400)
+        .status(HTTP_BAD_REQUEST)
         .json({ message: ERROR_MESSAGES.MISSING_GOOGLE_DATA });
     }
     try {
@@ -122,10 +123,10 @@ class AuthController {
       };
       const token = generateToken(payload);
       return res
-        .status(200)
+        .status(HTTP_OK)
         .json({ user, token, message: SUCCESS_MESSAGES.LOGIN_SUCCESS });
     } catch (err: any) {
-      return res.status(500).json({
+      return res.status(HTTP_SERVER_ERROR).json({
         message: ERROR_MESSAGES.GOOGLE_SIGNIN_FAILED,
         error: err.message,
       });
