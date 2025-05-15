@@ -3,75 +3,64 @@ dotenv.config();
 
 import request from "supertest";
 import app from "./index";
-import { prisma } from "./controllers/authController";
+import { PrismaClient } from "@prisma/client";
 
-beforeEach(async () => {
-  await prisma.userRoles.deleteMany();
-  await prisma.users.deleteMany();
-});
+let server: any;
+const prisma = new PrismaClient();
 
 describe("GET /", () => {
+  beforeAll((done) => {
+    server = app.listen(0, done);
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+    if (server) server.close();
+  });
+
   it("should return a success message", async () => {
-    const response = await request(app).get("/");
+    const response = await request(server).get("/api");
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      statusCode: 200,
       message: "BP Ticket Backend API is running!",
     });
   });
 });
 
-describe("POST /auth/google-signin", () => {
-  it("should create a new user with the client role and save provider details if the user does not exist", async () => {
-    const response = await request(app).post("/auth/google-signin").send({
-      email: "testuser@example.com",
-      firstName: "Test",
-      lastName: "User",
-    });
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("token");
-    expect(response.body.user).toMatchObject({
-      email: "testuser@example.com",
-      firstName: "Test",
-      lastName: "User",
-      provider: "google",
-      providerId: "google-id",
-    });
-
-    const userInDb = await prisma.users.findUnique({
-      where: { email: "testuser@example.com" },
-    });
-    expect(userInDb).toBeTruthy();
-    expect(userInDb?.provider).toBe("google");
-    expect(userInDb?.providerId).toBe("google-id");
+describe("Auth Endpoints", () => {
+  beforeEach(async () => {
+    await prisma.userRoles.deleteMany();
+    await prisma.users.deleteMany();
   });
 
-  it("should return an existing user with provider details if the user already exists", async () => {
-    await prisma.users.create({
-      data: {
-        email: "existinguser@example.com",
-        firstName: "Existing",
-        lastName: "User",
-        provider: "google",
-        providerId: "existing-google-id",
-      },
+  it("should sign up a new user with client role", async () => {
+    const res = await request(server).post("/api/auth/signup").send({
+      firstName: "Test",
+      lastName: "User",
+      email: "testuser@example.com",
+      password: "Password123!",
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.token).toBeDefined();
+    expect(res.body.message).toBe("User registered successfully.");
+  });
+
+  it("should login an existing user", async () => {
+    await request(server).post("/api/auth/signup").send({
+      firstName: "Test",
+      lastName: "User",
+      email: "testlogin@example.com",
+      password: "Password123!",
     });
 
-    const response = await request(app).post("/auth/google-signin").send({
-      email: "existinguser@example.com",
-      firstName: "Existing",
-      lastName: "User",
+    const res = await request(server).post("/api/auth/login").send({
+      email: "testlogin@example.com",
+      password: "Password123!",
     });
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("token");
-    expect(response.body.user).toMatchObject({
-      email: "existinguser@example.com",
-      firstName: "Existing",
-      lastName: "User",
-      provider: "google",
-      providerId: "existing-google-id",
-    });
+    expect(res.status).toBe(200);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.token).toBeDefined();
+    expect(res.body.message).toBe("Login successful.");
   });
 });

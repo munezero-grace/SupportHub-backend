@@ -1,17 +1,28 @@
-import express from "express";
+import { Router } from "express";
+import AuthController from "../controllers/auth.controller";
+import { validateRequest } from "../middlewares/validateRequest";
 import {
-  signupWithEmail,
-  loginWithEmail,
-  googleSignIn,
-} from "../controllers/authController";
+  signupValidation,
+  loginValidation,
+  googleValidation,
+} from "../validations/auth.validation";
 
-const router = express.Router();
+const router = Router();
 
+router.post("/signup", validateRequest(signupValidation), async (req, res) => {
+  await AuthController.signup(req, res);
+});
 
-router.post("/signup", signupWithEmail);
-router.post("/login", loginWithEmail);
-router.post("/google-signin", googleSignIn);
+router.post("/login", validateRequest(loginValidation), async (req, res) => {
+  await AuthController.login(req, res);
+});
+
+router.post(
+  "/google-signin",
+  validateRequest(googleValidation),
+  async (req, res) => {
+    await AuthController.googleSignIn(req, res);
+  }
+);
 
 export default router;
-  
-
