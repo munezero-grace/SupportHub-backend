@@ -7,4 +7,5 @@ export const ERROR_MESSAGES = {
   LOGIN_FAILED: "Login failed.",
   GOOGLE_SIGNIN_FAILED: "Google sign-in failed.",
   MISSING_GOOGLE_DATA: "Missing Google user data.",
+  PROVIDER_NOT_ALLOWED: "Provider is not allowed.",
 };

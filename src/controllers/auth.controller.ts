@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { generateToken } from "../helpers/generateToken";
 import {
   signupValidation,
@@ -94,17 +94,22 @@ class AuthController {
   }
 
   public async googleSignIn(req: Request, res: Response) {
-    const { email, firstName, lastName } = req.body;
-    if (!email || !firstName || !lastName) {
+    const { email, firstName, lastName, provider, providerId } = req.body;
+    if (!email || !firstName || !lastName || !provider || !providerId) {
       return res
         .status(HTTP_BAD_REQUEST)
         .json({ message: ERROR_MESSAGES.MISSING_GOOGLE_DATA });
+    }
+    if (provider !== "google") {
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ message: ERROR_MESSAGES.PROVIDER_NOT_ALLOWED });
     }
     try {
       let user = await prisma.users.findUnique({ where: { email } });
       if (!user) {
         user = await prisma.users.create({
-          data: { email, firstName, lastName },
+          data: { email, firstName, lastName, provider, providerId },
         });
         await this.assignClientRole(user.id);
       }

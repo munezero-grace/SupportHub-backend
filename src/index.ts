@@ -6,6 +6,7 @@ import { HTTP_OK } from "./constants/httpStatusCodes";
 dotenv.config();
 
 const app = express();
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);

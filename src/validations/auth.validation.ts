@@ -52,4 +52,6 @@ export const googleValidation = Joi.object({
   email: Joi.string().email().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
+  provider: Joi.string().valid("google").required(),
+  providerId: Joi.string().required(),
 });
