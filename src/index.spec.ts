@@ -37,7 +37,7 @@ describe("Auth Endpoints", () => {
     const res = await request(server).post("/api/auth/signup").send({
       firstName: "Test",
       lastName: "User",
-      email: "testuser@example.com",
+      email: "testuser@gmail.com",
       password: "Password123!",
     });
     expect(res.status).toBe(201);
@@ -50,12 +50,12 @@ describe("Auth Endpoints", () => {
     await request(server).post("/api/auth/signup").send({
       firstName: "Test",
       lastName: "User",
-      email: "testlogin@example.com",
+      email: "testlogin@gmail.com",
       password: "Password123!",
     });
 
     const res = await request(server).post("/api/auth/login").send({
-      email: "testlogin@example.com",
+      email: "testlogin@gmail.com",
       password: "Password123!",
     });
     expect(res.status).toBe(200);
