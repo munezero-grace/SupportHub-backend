@@ -6,23 +6,14 @@ import {
   loginValidation,
   googleValidation,
 } from "../validations/auth.validation";
+import { WrapAsync } from "../middlewares/wrapAsync";
 
 const router = Router();
 
-router.post("/signup", validateRequest(signupValidation), async (req, res) => {
-  await AuthController.signup(req, res);
-});
+router.post("/signup", validateRequest(signupValidation), WrapAsync(AuthController.signup));
+router.post("/login", validateRequest(loginValidation), WrapAsync(AuthController.login));
+router.post("/google-signin", validateRequest(googleValidation), WrapAsync(AuthController.googleSignIn));
 
-router.post("/login", validateRequest(loginValidation), async (req, res) => {
-  await AuthController.login(req, res);
-});
-
-router.post(
-  "/google-signin",
-  validateRequest(googleValidation),
-  async (req, res) => {
-    await AuthController.googleSignIn(req, res);
-  }
-);
 
 export default router;
+

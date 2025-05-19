@@ -8,16 +8,16 @@ import { PrismaClient } from "@prisma/client";
 let server: any;
 const prisma = new PrismaClient();
 
+beforeAll(async () => {
+  server = app.listen(0);
+});
+
+afterAll(async () => {
+  await prisma.$disconnect();
+  await new Promise<void>((resolve) => server.close(resolve));
+});
+
 describe("GET /", () => {
-  beforeAll((done) => {
-    server = app.listen(0, done);
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
-    if (server) server.close();
-  });
-
   it("should return a success message", async () => {
     const response = await request(server).get("/api");
     expect(response.status).toBe(200);

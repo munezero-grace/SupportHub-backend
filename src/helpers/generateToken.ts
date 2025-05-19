@@ -1,9 +1,11 @@
 import * as jwt from "jsonwebtoken";
 import { AuthPayload } from "../types/auth";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super-secret";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is not set");
+}
 
-// Helper to generate JWT tokens for authentication. Reusable across controllers.
 export const generateToken = (user: AuthPayload): string => {
   return jwt.sign(
     {
@@ -14,6 +16,6 @@ export const generateToken = (user: AuthPayload): string => {
       role: user.role,
     },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "1d" }
   );
 };
