@@ -9,7 +9,13 @@ import {
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 import { AuthPayload } from "../types/auth";
-import { HTTP_BAD_REQUEST, HTTP_CREATED, HTTP_EXIST, HTTP_OK, HTTP_SERVER_ERROR } from "../constants/httpStatusCodes";
+import {
+  HTTP_BAD_REQUEST,
+  HTTP_CREATED,
+  HTTP_EXIST,
+  HTTP_OK,
+  HTTP_SERVER_ERROR,
+} from "../constants/httpStatusCodes";
 
 const prisma = new PrismaClient();
 
@@ -17,7 +23,9 @@ class AuthController {
   public async signup(req: Request, res: Response) {
     const { error } = signupValidation.validate(req.body);
     if (error) {
-      return res.status(HTTP_BAD_REQUEST).json({ message: error.details[0].message });
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ message: error.details[0].message });
     }
     const { firstName, lastName, email, password } = req.body;
     try {
@@ -53,7 +61,9 @@ class AuthController {
   public async login(req: Request, res: Response) {
     const { error } = loginValidation.validate(req.body);
     if (error) {
-      return res.status(HTTP_BAD_REQUEST).json({ message: error.details[0].message });
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ message: error.details[0].message });
     }
     const { email, password } = req.body;
     try {

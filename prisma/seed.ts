@@ -15,11 +15,10 @@ async function main() {
     );
   }
   const roleNames = [
-    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
     UserRole.TICKET_MANAGER,
     UserRole.DEVELOPER,
     UserRole.CLIENT,
-    UserRole.SUPER_ADMIN,
   ];
 
   const roles = await Promise.all(

@@ -1,8 +1,6 @@
 export enum UserRole {
-  ADMIN = "admin",
-  SUPER_ADMIN = "super-admin",   
-  TICKET_MANAGER = "ticket-manager",
+  SUPER_ADMIN = "super_admin",
+  TICKET_MANAGER = "ticket_manager",
   CLIENT = "client",
-  DEVELOPER="developer"
+  DEVELOPER = "developer",
 }
-
