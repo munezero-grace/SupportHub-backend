@@ -45,11 +45,23 @@ export const loginValidation = Joi.object({
       "string.pattern.base": "email must be a valid Gmail address (@gmail.com)",
       "any.required": "email is required",
     }),
-  password: Joi.string().required(),
+  password: Joi.string().required().messages({
+    "string.empty": "password is not allowed to be empty",
+    "any.required": "password is required",
+  }),
 });
 
 export const googleValidation = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string()
+    .email()
+    .pattern(/^[a-zA-Z0-9._%+-]+@gmail\.com$/)
+    .required()
+    .messages({
+      "string.email": "email must be a valid email",
+      "string.empty": "email is not allowed to be empty",
+      "string.pattern.base": "email must be a valid Gmail address (@gmail.com)",
+      "any.required": "email is required",
+    }),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   provider: Joi.string().valid("google").required(),
