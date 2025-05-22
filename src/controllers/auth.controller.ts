@@ -13,33 +13,23 @@ import {
   HTTP_OK,
 } from "../constants/httpStatusCodes";
 import { userSelectFields } from "../utils/userSelects";
-
 const prisma = new PrismaClient();
-
 class AuthController {
   public signup = async (
     req: Request,
     res: Response,
   ): Promise<void> => {
-
       const { firstName, lastName, email, password } = req.body;
-
       const existingUser = await prisma.users.findUnique({ where: { email } });
-
       if (existingUser) {
-        
         throw new AuthError(HTTP_EXIST, ERROR_MESSAGES.USER_ALREADY_EXISTS);
       }
-
       const hashedPassword = await bcrypt.hash(password, 10);
-
       const user = await prisma.users.create({
         data: { firstName, lastName, email, password: hashedPassword },
         select: userSelectFields,
       });
-
       await this.assignClientRole(user.id);
-
       const token = generateToken({
         id: user.id,
         firstName: user.firstName,
@@ -47,99 +37,79 @@ class AuthController {
         email: user.email,
         role: UserRole.CLIENT,
       });
-
       res.status(HTTP_CREATED).json({
         user,
         token,
         message: SUCCESS_MESSAGES.USER_REGISTERED,
       });
-    };   
-
-
-
+    };
   public login = async (
     req: Request,
     res: Response,
-
   ): Promise<void> => {
       const { email, password } = req.body;
-
       const findUser = await prisma.users.findUnique({
         where: { email },
         select: { ...userSelectFields, password: true },
       });
-
       if (!findUser || !findUser.password) {
-        throw new AuthError(
-          HTTP_BAD_REQUEST,
-          ERROR_MESSAGES.INVALID_CREDENTIALS
-        );
+        res.status(HTTP_BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
+        return;
       }
-
       const isMatch = await bcrypt.compare(password, findUser.password);
       if (!isMatch) {
-        throw new AuthError(
-          HTTP_BAD_REQUEST,
-          ERROR_MESSAGES.INVALID_CREDENTIALS
-        );
+        res.status(HTTP_BAD_REQUEST).json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
+        return;
       }
       const userRole = await prisma.userRoles.findFirst({
         where: { userId: findUser.id },
       });
-
       const role = userRole
         ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
         : null;
-
       const token = generateToken({
         id: findUser.id,
         firstName: findUser.firstName,
         lastName: findUser.lastName,
         email: findUser.email,
         role: (role?.name as UserRole) || UserRole.CLIENT,
+        provider: 'credentials',
+        providerId: 'seeded-superadmin',
       });
-
       const { password: _, ...safeUser } = findUser;
-
-      res.status(HTTP_OK).json({
-        user: safeUser,
+      const responsePayload = {
+        user: {
+          ...safeUser,
+          provider: 'credentials',
+          providerId: 'seeded-superadmin',
+        },
         token,
         message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
-      });
+      };
+      res.status(HTTP_OK).json(responsePayload);
     };
-
-
-
-
-
   public googleSignIn = async (
     req: Request,
     res: Response,
   ): Promise<void> => {
       const { email, firstName, lastName, provider, providerId } = req.body;
-
       let user = await prisma.users.findUnique({
         where: { email },
         select: userSelectFields,
       });
-
       if (!user) {
         user = await prisma.users.create({
           data: { email, firstName, lastName, provider, providerId },
           select: userSelectFields,
         });
-
         await this.assignClientRole(user.id);
       }
-
       const userRole = await prisma.userRoles.findFirst({
         where: { userId: user.id },
       });
-
       const role = userRole
         ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
         : null;
-
       const token = generateToken({
         id: user.id,
         firstName: user.firstName,
@@ -147,21 +117,16 @@ class AuthController {
         email: user.email,
         role: (role?.name as UserRole) || UserRole.CLIENT,
       });
-
       res.status(HTTP_OK).json({
         user,
         token,
         message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
       });
     };
-
-
-
   private async assignClientRole(userId: string) {
     const clientRole = await prisma.roles.findUnique({
       where: { name: UserRole.CLIENT },
     });
-
     if (clientRole) {
       await prisma.userRoles.create({
         data: { userId, roleId: clientRole.id },
@@ -169,5 +134,4 @@ class AuthController {
     }
   }
 }
-
 export default new AuthController();

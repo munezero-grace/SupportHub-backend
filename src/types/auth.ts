@@ -8,6 +8,11 @@ export interface SignupRequestBody {
 export interface LoginRequestBody {
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  provider?: string;
+  providerId?: string;
 }
 
 export interface GoogleSignInBody {
@@ -24,4 +29,6 @@ export interface AuthPayload {
   lastName: string;
   email: string;
   role: string;
+  provider?: string;
+  providerId?: string;
 }

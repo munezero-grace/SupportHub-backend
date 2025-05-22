@@ -49,6 +49,7 @@ export const loginValidation = Joi.object({
     "string.empty": "password is not allowed to be empty",
     "any.required": "password is required",
   }),
+  provider: Joi.string().valid("credentials").required(),
 });
 
 export const googleValidation = Joi.object({
