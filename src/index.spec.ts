@@ -57,6 +57,7 @@ describe("Auth Endpoints", () => {
     const res = await request(server).post("/api/auth/login").send({
       email: "testlogin@gmail.com",
       password: "Password123!",
+      provider: "credentials",
     });
     expect(res.status).toBe(200);
     expect(res.body.user).toBeDefined();
