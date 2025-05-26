@@ -64,6 +64,52 @@ async function main() {
       });
     }
   }
+
+  // Initialize some products
+  const initialProducts = [
+    {
+      name: "BP Ticket",
+      description: "Support ticket management platform with integrations",
+      status: "Active",
+      clientCount: 3,
+      developerCount: 2,
+      activeTickets: 8,
+    },
+    {
+      name: "BP Analytics",
+      description: "Data visualization and analytics platform",
+      status: "Active",
+      clientCount: 3,
+      developerCount: 2,
+      activeTickets: 3,
+    },
+    {
+      name: "Customer Portal",
+      description: "Client-facing portal for ticket submission",
+      status: "Active",
+      clientCount: 2,
+      developerCount: 1,
+      activeTickets: 5,
+    },
+  ];
+
+  console.log("Seeding products...");
+  for (const product of initialProducts) {
+    const sequence = await prisma.product.count() + 1001;
+    const productId = `P-${sequence}`;
+
+    await prisma.product.upsert({
+      where: { id: productId },
+      update: product,
+      create: {
+        id: productId,
+        sequence,
+        ...product,
+      },
+    });
+  }
+
+  console.log("Seeding completed.");
 }
 main()
   .catch((e) => {

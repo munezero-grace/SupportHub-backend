@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/authRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { HTTP_OK } from "./constants/httpStatusCodes";
+import productRoutes from "./routes/productRoutes";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use(limiter);
 
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({

@@ -43,3 +43,14 @@ model UserRoles {
 
   @@unique([userId, roleId])
 }
+
+model Product {
+  id          String   @id
+  name        String
+  description String?
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
