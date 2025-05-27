@@ -14,6 +14,4 @@ router.post("/signup", validateRequest(signupValidation), WrapAsync(AuthControll
 router.post("/login", validateRequest(loginValidation), WrapAsync(AuthController.login));
 router.post("/google-signin", validateRequest(googleValidation), WrapAsync(AuthController.googleSignIn));
 
-
 export default router;
-
