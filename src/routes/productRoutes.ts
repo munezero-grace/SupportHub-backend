@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { z } from 'zod';
-import ProductController from '../controllers/product.controller';
+import ProductController from '../controllers/ProductsController';
 import { validateRequest } from '../middlewares/validateRequest';
 import { errorHandler } from '../middlewares/errorHandler';
-import { productSchema, productIdSchema } from '../types/product';
+import { productSchema } from '../types/product';
+import { productIdSchema, updateProductSchema } from '../validations/product.validation';
 
 const router = Router();
 
@@ -22,17 +22,9 @@ router.get('/:id',
   ProductController.getProductById
 );
 
-router.put('/:id',
-  validateRequest({ 
+router.put('/:id',  validateRequest({ 
     params: productIdSchema,
-    body: z.object({
-      name: z.string().min(2, 'Name must be at least 2 characters').optional(),
-      description: z.string().optional(),
-      status: z.enum(['Active', 'Inactive']).optional(),
-      clientCount: z.number().min(0).optional(),
-      developerCount: z.number().min(0).optional(),
-      activeTickets: z.number().min(0).optional()
-    })
+    body: updateProductSchema
   }),
   ProductController.updateProduct
 );

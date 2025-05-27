@@ -8,4 +8,9 @@ export const ERROR_MESSAGES = {
   GOOGLE_SIGNIN_FAILED: "Google sign-in failed.",
   MISSING_GOOGLE_DATA: "Missing Google user data.",
   PROVIDER_NOT_ALLOWED: "Provider is not allowed.",
+  PRODUCT_NOT_FOUND: "Product not found.",
+  PRODUCT_RETRIEVE_FAILED: "Failed to retrieve product(s).",
+  PRODUCT_CREATE_FAILED: "Failed to create product.",
+  PRODUCT_UPDATE_FAILED: "Failed to update product.",
+  PRODUCT_DELETE_FAILED: "Failed to delete product.",
 };

@@ -44,13 +44,19 @@ model UserRoles {
   @@unique([userId, roleId])
 }
 
-model Product {
-  id          String   @id
+enum ProductStatus {
+  Active
+  Inactive
+}
+
+model Products {
+  id          String        @id @default(uuid())
+  productCode String        @unique
   name        String
   description String?
-  status      String   @default("Active")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  status      ProductStatus @default(Active)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  @@map("products")
+  @@map("Products")
 }

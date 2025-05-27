@@ -13,6 +13,7 @@ import {
   HTTP_OK,
 } from "../constants/httpStatusCodes";
 import { userSelectFields } from "../utils/userSelects";
+
 const prisma = new PrismaClient();
 class AuthController {
   public signup = async (req: Request, res: Response): Promise<void> => {
@@ -42,7 +43,7 @@ class AuthController {
     });
   };
 
-  public login = async (req: Request, res: Response): Promise<void> => {
+  public login = async (req: Request, res: Response): Promise<any> => {
     const { email, password } = req.body;
     const findUser = await prisma.users.findUnique({
       where: { email },
@@ -74,7 +75,7 @@ class AuthController {
       firstName: findUser.firstName,
       lastName: findUser.lastName,
       email: findUser.email,
-      role: (role?.name as UserRole) || UserRole.CLIENT,
+      role: (role?.name as UserRole),
       provider: "credentials",
       providerId: "seeded-superadmin",
     });
@@ -83,13 +84,15 @@ class AuthController {
     const responsePayload = {
       user: {
         ...safeUser,
+        role: (role?.name as UserRole),
         provider: "credentials",
         providerId: "seeded-superadmin",
       },
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
-    res.status(HTTP_OK).json(responsePayload);
+
+    return res.status(HTTP_OK).json(responsePayload);
   };
 
   public googleSignIn = async (req: Request, res: Response): Promise<void> => {
@@ -120,10 +123,15 @@ class AuthController {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: (role?.name as UserRole) || UserRole.CLIENT,
+      role: (role?.name as UserRole),
     });
     res.status(HTTP_OK).json({
-      user,
+      user: {
+        ...user,
+        role: (role?.name as UserRole),
+        provider: "credentials",
+        providerId: "seeded-superadmin",
+      },
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     });
