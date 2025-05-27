@@ -25,6 +25,7 @@ model Users {
   userRoles  UserRoles[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+  Clients    Clients[]
 }
 
 model Roles {
@@ -49,6 +50,16 @@ enum ProductStatus {
   inactive
 }
 
+enum SupportTier {
+  premium
+  standard
+}
+
+enum ClientStatus {
+  active
+  inactive
+}
+
 model Products {
   id          String        @id @default(uuid())
   productCode String        @unique
@@ -59,4 +70,19 @@ model Products {
   updatedAt   DateTime      @updatedAt
 
   @@map("Products")
+}
+
+model Clients {
+  id          String       @id @default(uuid())
+  clientCode  String       @unique
+  companyName String
+  supportTier SupportTier  @default(standard)
+  status      ClientStatus @default(active)
+  createdBy   String       @default(uuid())
+  userId      String       @default(uuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        Users?       @relation(fields: [userId], references: [id])
+
+  @@map("Clients")
 }

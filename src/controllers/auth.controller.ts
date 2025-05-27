@@ -13,7 +13,6 @@ import {
   HTTP_OK,
 } from "../constants/httpStatusCodes";
 import { userSelectFields } from "../utils/userSelects";
-
 const prisma = new PrismaClient();
 class AuthController {
   public signup = async (req: Request, res: Response) => {
@@ -83,8 +82,7 @@ class AuthController {
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
-
-    return res.status(HTTP_OK).json(responsePayload);
+    res.status(HTTP_OK).json(responsePayload);
   };
 
   public googleSignIn = async (req: Request, res: Response) => {
