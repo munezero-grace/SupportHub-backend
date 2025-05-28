@@ -1,4 +1,4 @@
-import { PrismaClient, Products } from '@prisma/client';
+import { PrismaClient,Products } from '@prisma/client';
 import { ProductCreateInput, ProductUpdateInput } from '../types/product';
 
 const prisma = new PrismaClient();

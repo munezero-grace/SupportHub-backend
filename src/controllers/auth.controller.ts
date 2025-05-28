@@ -16,7 +16,7 @@ import { userSelectFields } from "../utils/userSelects";
 
 const prisma = new PrismaClient();
 class AuthController {
-  public signup = async (req: Request, res: Response): Promise<void> => {
+  public signup = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
     const existingUser = await prisma.users.findUnique({ where: { email } });
     if (existingUser) {
@@ -36,14 +36,13 @@ class AuthController {
       email: user.email,
       role: UserRole.CLIENT,
     });
-    res.status(HTTP_CREATED).json({
-      user,
+    return res.status(HTTP_CREATED).json({
       token,
       message: SUCCESS_MESSAGES.USER_REGISTERED,
     });
   };
 
-  public login = async (req: Request, res: Response): Promise<any> => {
+  public login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const findUser = await prisma.users.findUnique({
       where: { email },
@@ -75,19 +74,12 @@ class AuthController {
       firstName: findUser.firstName,
       lastName: findUser.lastName,
       email: findUser.email,
-      role: (role?.name as UserRole),
+      role: role?.name as UserRole,
       provider: "credentials",
       providerId: "seeded-superadmin",
     });
 
-    const { password: _, ...safeUser } = findUser;
     const responsePayload = {
-      user: {
-        ...safeUser,
-        role: (role?.name as UserRole),
-        provider: "credentials",
-        providerId: "seeded-superadmin",
-      },
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
@@ -95,7 +87,7 @@ class AuthController {
     return res.status(HTTP_OK).json(responsePayload);
   };
 
-  public googleSignIn = async (req: Request, res: Response): Promise<void> => {
+  public googleSignIn = async (req: Request, res: Response) => {
     const { email, firstName, lastName, provider, providerId } = req.body;
     let user = await prisma.users.findUnique({
       where: { email },
@@ -123,15 +115,10 @@ class AuthController {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: (role?.name as UserRole),
+      role: role?.name as UserRole,
     });
-    res.status(HTTP_OK).json({
-      user: {
-        ...user,
-        role: (role?.name as UserRole),
-        provider: "credentials",
-        providerId: "seeded-superadmin",
-      },
+
+    return res.status(HTTP_OK).json({
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     });

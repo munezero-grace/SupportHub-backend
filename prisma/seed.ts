@@ -2,6 +2,7 @@ import { PrismaClient, UserRoleEnum } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 import { UserRole } from "../src/types";
+import { debug } from "console";
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ async function main() {
 
 main()
   .catch((e) => {
+    debug("Error seeding database:", e);
     process.exit(1);
   })
   .finally(async () => {
