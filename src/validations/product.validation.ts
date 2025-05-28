@@ -1,11 +1,29 @@
-import { z } from 'zod';
+import Joi from "joi";
 
-export const productIdSchema = z.object({
-  id: z.string().min(1, 'Product ID is required')
+export const productSchema = Joi.object({
+  name: Joi.string()
+    .min(2)
+    .max(50)
+    .required(),
+  description: Joi.string()
+    .min(10)
+    .max(500)
+    .required(),
+  status: Joi.string().valid('active', 'inactive')
+}
+);
+
+export const updateProductSchema = Joi.object({
+  name: Joi.string()
+    .min(2)
+    .max(50)
+    .optional(),
+  description: Joi.string()
+    .min(10)
+    .max(500)
+    .optional(),
+  status: Joi.string().valid('active', 'inactive')
 });
 
-export const updateProductSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
-  description: z.string().optional(),
-  status: z.enum(['Active', 'Inactive']).optional(),
-});
+export const productValidation = productSchema;
+export const updateProductValidation = updateProductSchema;

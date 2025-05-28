@@ -9,19 +9,20 @@ export class ProductsService {
       orderBy: { productCode: 'desc' }
     });
 
-    return !lastProduct 
+    return !lastProduct
       ? 'P-1001'
       : `P-${parseInt(lastProduct.productCode.split('-')[1]) + 1}`;
   }
+
   async createProduct(data: ProductCreateInput): Promise<Products> {
     const productCode = await this.getNextProductCode();
-    
+
     return prisma.products.create({
       data: {
         productCode,
         name: data.name,
         description: data.description || '',
-        status: data.status,
+        status: data.status.toLowerCase() as 'active' | 'inactive',
       }
     });
   }
@@ -45,9 +46,14 @@ export class ProductsService {
   }
 
   async updateProduct(id: string, data: ProductUpdateInput): Promise<Products> {
+    const updateData = {
+      ...data,
+      status: data.status ? data.status.toLowerCase() as 'active' | 'inactive' : undefined
+    };
+
     return prisma.products.update({
       where: { id },
-      data
+      data: updateData
     });
   }
 

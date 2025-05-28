@@ -1,12 +1,8 @@
 import { Router } from "express";
 import AuthController from "../controllers/auth.controller";
 import { validateRequest } from "../middlewares/validateRequest";
-import {
-  signupValidation,
-  loginValidation,
-  googleValidation,
-} from "../validations/auth.validation";
 import { WrapAsync } from "../middlewares/wrapAsync";
+import { googleValidation, loginValidation, signupValidation } from "../validations/auth.validation";
 
 const router = Router();
 

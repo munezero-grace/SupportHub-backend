@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "products" ADD COLUMN     "activeTickets" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "clientCount" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "developerCount" INTEGER NOT NULL DEFAULT 0;
