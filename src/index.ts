@@ -8,6 +8,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import { HTTP_OK } from "./constants/httpStatusCodes";
 import productRoutes from "./routes/productRoutes";
 
+import { setupSwagger } from "./documentations/swagger-docs";
 dotenv.config();
 
 const app = express();
@@ -42,10 +43,12 @@ const port = process.env.PORT || 5000;
 
 app.use(errorHandler);
 
+
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
   console.log(`Swagger docs available at: http://localhost:${port}/api-docs`);
 });
 
+setupSwagger(app);
 
 export default app;

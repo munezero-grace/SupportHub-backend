@@ -45,8 +45,8 @@ model UserRoles {
 }
 
 enum ProductStatus {
-  Active
-  Inactive
+  active
+  inactive
 }
 
 model Products {
@@ -54,7 +54,7 @@ model Products {
   productCode String        @unique
   name        String
   description String?
-  status      ProductStatus @default(Active)
+  status      ProductStatus @default(active)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

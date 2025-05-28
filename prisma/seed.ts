@@ -31,6 +31,7 @@ async function main() {
       })
     )
   );
+
   let superAdmin = await prisma.users.findUnique({
     where: { email: email },
   });

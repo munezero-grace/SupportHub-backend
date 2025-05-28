@@ -28,12 +28,12 @@ class ProductsController {
         try {
             const { id } = req.params;
             const product = await productService.getProductById(id);
-            
+
             if (!product) {
                 res.status(HTTP_NOT_FOUND).json({ error: 'Product not found' });
                 return;
             }
-            
+
             res.status(HTTP_OK).json(product);
         } catch (error) {
             res.status(HTTP_BAD_REQUEST).json({ error: 'Failed to retrieve product' });
@@ -45,7 +45,12 @@ class ProductsController {
             const product = await productService.createProduct(req.body);
             res.status(HTTP_CREATED).json(product);
         } catch (error) {
-            res.status(HTTP_BAD_REQUEST).json({ error: 'Failed to create product' });
+            console.error('Error creating product:', error);
+            if (error instanceof Error) {
+                res.status(HTTP_BAD_REQUEST).json({ error: error.message });
+            } else {
+                res.status(HTTP_BAD_REQUEST).json({ error: 'Failed to create product' });
+            }
         }
     }
 
@@ -67,7 +72,7 @@ class ProductsController {
         try {
             const { id } = req.params;
             const product = await productService.getProductById(id);
-            
+
             if (!product) {
                 res.status(HTTP_NOT_FOUND).json({ error: 'Product not found' });
                 return;

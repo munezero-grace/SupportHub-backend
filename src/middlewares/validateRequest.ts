@@ -1,21 +1,21 @@
 import { Request, Response, NextFunction } from "express";
-import { AnyZodObject } from "zod";
+import * as Joi from "joi";
 import { HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
 
-export const validateRequest = (schema: { body?: AnyZodObject, params?: AnyZodObject }) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (schema.body) {
-        req.body = await schema.body.parseAsync(req.body);
-      }
-      if (schema.params) {
-        req.params = await schema.params.parseAsync(req.params);
-      }
+export const validateRequest = (schema: Joi.ObjectSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    console.log("here is the body in the middleware", req.body);
+    
+    const { error } = schema.validate(req.body, { abortEarly: false });
+    if (error) {
+      console.log("here is the error in the middleware", error);
+      
+      const errors = error.details.map((detail) =>
+        detail.message.replace(/['"]+/g, "")
+      );
+      res.status(HTTP_BAD_REQUEST).json({ messages: errors });
+    } else {
       next();
-    } catch (error: any) {
-      res.status(HTTP_BAD_REQUEST).json({ 
-        messages: error.errors?.map((e: any) => e.message) || ['Validation failed'] 
-      });
     }
   };
 };
