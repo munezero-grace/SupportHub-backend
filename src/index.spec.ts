@@ -5,7 +5,8 @@ import request from "supertest";
 import app from "./index";
 import { PrismaClient } from "@prisma/client";
 
-let server: any;
+import { Server } from "http";
+let server: Server;
 const prisma = new PrismaClient();
 
 beforeAll(async () => {
@@ -14,7 +15,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect();
-  await new Promise<void>((resolve) => server.close(resolve));
+  await new Promise<void>((resolve, reject) =>
+    server.close((err?: Error) => (err ? reject(err) : resolve()))
+  );
 });
 
 describe("GET /", () => {

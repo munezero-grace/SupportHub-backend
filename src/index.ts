@@ -5,10 +5,11 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/authRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
+import clientRoutes from "./routes/clientRoutes";
 import { HTTP_OK } from "./constants/httpStatusCodes";
 import productRoutes from "./routes/productRoutes";
-
 import { setupSwagger } from "./documentations/swagger-docs";
+
 dotenv.config();
 
 const app = express();
@@ -21,17 +22,25 @@ app.use(
   })
 );
 
-
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
+  windowMs: 15 * 60 * 1000,
+  max: 100,
 });
 
 app.use(express.json());
 app.use(limiter);
+if (process.env.NODE_ENV === "test") {
+  const mockAuth = require("./middlewares/mockAuth").default;
+  app.use((req, res, next) => {
+    // Skip auth and health check routes
+    if (req.path.startsWith("/api/auth") || req.path === "/api") return next();
+    return mockAuth(req, res, next);
+  });
+}
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/clients", clientRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({
@@ -50,5 +59,4 @@ app.listen(port, () => {
 });
 
 setupSwagger(app);
-
 export default app;

@@ -1,4 +1,4 @@
-import { PrismaClient, UserRoleEnum } from "@prisma/client";
+import { PrismaClient, UserRoleEnum} from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
 import { UserRole } from "../src/types";
@@ -9,7 +9,7 @@ dotenv.config();
 const prisma = new PrismaClient();
 async function main() {
   const email = process.env.SUPER_ADMIN_EMAIL || "superadmin@gmail.com";
-  const password = process.env.SUPER_ADMIN_PASSWORD || "Superadmin123";
+  const password = process.env.SUPER_ADMIN_PASSWORD || "Superadmin123...";
   if (!email || !password) {
     throw new Error(
       "Environment variables SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be defined"

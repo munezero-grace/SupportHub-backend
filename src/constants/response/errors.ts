@@ -13,4 +13,5 @@ export const ERROR_MESSAGES = {
   PRODUCT_CREATE_FAILED: "Failed to create product.",
   PRODUCT_UPDATE_FAILED: "Failed to update product.",
   PRODUCT_DELETE_FAILED: "Failed to delete product.",
+  CLIENT_NOT_FOUND: "Client not found",
 };
