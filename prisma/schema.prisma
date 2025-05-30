@@ -68,6 +68,7 @@ model Products {
   status      ProductStatus @default(active)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  clientProducts ClientProduct[]
 
   @@map("Products")
 }
@@ -83,6 +84,18 @@ model Clients {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   user        Users?       @relation(fields: [userId], references: [id])
+  clientProducts ClientProduct[]
 
   @@map("Clients")
+}
+
+model ClientProduct {
+  id        String   @id @default(uuid())
+  clientId  String
+  productId String
+  client    Clients  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, productId])
+  @@map("ClientProduct")
 }

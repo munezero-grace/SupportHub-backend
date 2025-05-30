@@ -29,7 +29,14 @@ export class ProductsService {
 
   async getAllProducts(): Promise<Products[]> {
     return prisma.products.findMany({
-      orderBy: [{ productCode: 'desc' }]
+      orderBy: [{ productCode: 'desc' }],
+      include: {
+        clientProducts: {
+          include: {
+            client: true,
+          },
+        },
+      },
     });
   }
 
@@ -60,6 +67,41 @@ export class ProductsService {
   async deleteProduct(id: string): Promise<void> {
     await prisma.products.delete({
       where: { id }
+    });
+  }
+
+  async getClientsForProduct(productId: string) {
+    return prisma.clientProduct.findMany({
+      where: { productId },
+      include: {
+        client: true,
+      },
+    });
+  }
+  async addClientToProduct(productId: string, clientId: string) {
+    return prisma.clientProduct.upsert({
+      where: {
+        clientId_productId: {
+          clientId,
+          productId,
+        }
+      },
+      update: {}, 
+      create: {
+        productId,
+        clientId,
+      },
+    });
+  }
+
+  async removeClientFromProduct(productId: string, clientId: string) {
+    return prisma.clientProduct.delete({
+      where: {
+        clientId_productId: {
+          clientId,
+          productId,
+        },
+      },
     });
   }
 }

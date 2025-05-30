@@ -15,7 +15,8 @@ router.get('/', WrapAsync(ProductController.getAllProducts));
 router.get('/:id', WrapAsync(ProductController.getProductById));
 router.put('/:id', validateRequest(updateProductValidation), WrapAsync(ProductController.updateProduct));
 router.delete('/:id', WrapAsync(ProductController.deleteProduct));
-
+router.post('/:id/clients/:clientId', WrapAsync(ProductController.addClientToProduct));
+router.delete('/:id/clients/:clientId', WrapAsync(ProductController.removeClientFromProduct));
 router.use(errorHandler);
 
 export default router;

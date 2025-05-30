@@ -62,6 +62,11 @@ export class ClientService {
             email: true,
           },
         },
+        clientProducts: {
+          include: {
+            product: true
+          }
+        }
       },
     });
   }
@@ -81,17 +86,32 @@ export class ClientService {
     });
   }
 
+  async findClientByUUID(clientId: string): Promise<Clients | null> {
+    return prisma.clients.findUnique({
+      where: { id: clientId },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
   async updateClient(
     clientCode: string,
     data: Partial<Clients>
   ): Promise<Clients> {
-    // Only allow updating client-specific fields
+  
     const allowedFields: (keyof Clients)[] = [
       "companyName",
       "supportTier",
       "status",
     ];
-    // Only copy fields that are of the correct type (string for companyName/supportTier/status)
+ 
     const filteredData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (data[key] !== undefined && typeof data[key] === "string") {
@@ -135,6 +155,35 @@ export class ClientService {
   async deleteClient(clientCode: string): Promise<Clients> {
     return prisma.clients.delete({
       where: { clientCode },
+    });
+  }
+
+  async getProductsForClient(clientId: string) {
+    return prisma.clientProduct.findMany({
+      where: { clientId },
+      include: {
+        product: true,
+      },
+    });
+  }
+
+  async addProductToClient(clientId: string, productId: string) {
+    return prisma.clientProduct.create({
+      data: {
+        clientId,
+        productId,
+      },
+    });
+  }
+
+  async removeProductFromClient(clientId: string, productId: string) {
+    return prisma.clientProduct.delete({
+      where: {
+        clientId_productId: {
+          clientId,
+          productId,
+        },
+      },
     });
   }
 

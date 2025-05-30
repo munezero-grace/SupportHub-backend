@@ -14,4 +14,7 @@ export const ERROR_MESSAGES = {
   PRODUCT_UPDATE_FAILED: "Failed to update product.",
   PRODUCT_DELETE_FAILED: "Failed to delete product.",
   CLIENT_NOT_FOUND: "Client not found",
+  USER_NOT_FOUND: "User not found",
+  CANNOT_DELETE_USER_WITH_CLIENTS: "Cannot delete user with associated clients",
+  USER_DELETE_FAILED: "Failed to delete user"
 };

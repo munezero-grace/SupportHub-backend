@@ -7,4 +7,7 @@ export const SUCCESS_MESSAGES = {
   CLIENT_CREATED: "Client created successfully.",
   CLIENT_UPDATED: "Client updated successfully.",
   CLIENT_DELETED: "Client deleted successfully.",
+  CLIENT_ADDED_TO_PRODUCT: "Client added to product successfully.",
+  CLIENT_REMOVED_FROM_PRODUCT: "Client removed from product successfully.",
+  USER_DELETED: "User deleted successfully"
 };

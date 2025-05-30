@@ -8,6 +8,9 @@ import {
     HTTP_BAD_REQUEST
 } from '../constants/httpStatusCodes';
 
+import { ERROR_MESSAGES } from '../constants/response/errors';
+import { SUCCESS_MESSAGES } from '../constants/response/successMessages';
+
 const productService = new ProductsService();
 
 class ProductsController {
@@ -16,7 +19,8 @@ class ProductsController {
             const products = await productService.getAllProducts();
             const mappedProducts = products.map(product => ({
                 ...product,
-                id: product.id
+                id: product.id,
+                clientProducts: (product as { clientProducts?: { id: string }[] }).clientProducts || []
             }));
             res.status(HTTP_OK).json(mappedProducts);
         } catch (error) {
@@ -83,6 +87,33 @@ class ProductsController {
         } catch (error: any) {
             res.status(HTTP_BAD_REQUEST).json({ error: 'Failed to delete product' });
         }
+    }    static async getClientsForProduct(req: Request, res: Response): Promise<Response> {
+        const { id } = req.params;
+        const clients = await productService.getClientsForProduct(id);
+        return res.status(HTTP_OK).json(clients);
+    }
+
+    static async addClientToProduct(req: Request, res: Response): Promise<Response> {
+        const { id, clientId } = req.params;
+        const product = await productService.getProductById(id);
+        if (!product) {
+            return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
+        }
+
+        const clientService = new (await import('../services/client.service')).ClientService();
+        const client = await clientService.findClientByUUID(clientId);
+        if (!client) {
+            return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.CLIENT_NOT_FOUND });
+        }
+
+        const clientProduct = await productService.addClientToProduct(id, clientId);
+        return res.status(HTTP_CREATED).json({ message: SUCCESS_MESSAGES.CLIENT_ADDED_TO_PRODUCT || 'Client added to product successfully', data: clientProduct });
+    }
+
+    static async removeClientFromProduct(req: Request, res: Response): Promise<Response> {
+        const { id, clientId } = req.params;
+        await productService.removeClientFromProduct(id, clientId);
+        return res.status(HTTP_OK).json({ message: SUCCESS_MESSAGES.CLIENT_REMOVED_FROM_PRODUCT || 'Client removed from product successfully' });
     }
 }
 

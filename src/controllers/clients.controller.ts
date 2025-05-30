@@ -101,4 +101,22 @@ export class ClientController {
       message: `Client status updated to ${status}`,
     });
   }
+
+  async getProductsForClient(req: Request, res: Response) {
+    const { clientCode } = req.params;
+    const products = await clientService.getProductsForClient(clientCode);
+    res.status(HTTP_OK).json(products);
+  }
+
+  async addProductToClient(req: Request, res: Response) {
+    const { clientCode, productId } = req.params;
+    const clientProduct = await clientService.addProductToClient(clientCode, productId);
+    res.status(HTTP_CREATED).json(clientProduct);
+  }
+
+  async removeProductFromClient(req: Request, res: Response) {
+    const { clientCode, productId } = req.params;
+    await clientService.removeProductFromClient(clientCode, productId);
+    res.status(HTTP_NO_CONTENT).send();
+  }
 }
