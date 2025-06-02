@@ -2,7 +2,7 @@
 CREATE TYPE "UserRoleEnum" AS ENUM ('super_admin', 'ticket_manager', 'developer', 'client');
 
 -- CreateEnum
-CREATE TYPE "ProductStatus" AS ENUM ('Active', 'Inactive');
+CREATE TYPE "ProductStatus" AS ENUM ('active', 'inactive');
 
 -- CreateEnum
 CREATE TYPE "SupportTier" AS ENUM ('premium', 'standard');
@@ -49,7 +49,7 @@ CREATE TABLE "Products" (
     "productCode" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "status" "ProductStatus" NOT NULL DEFAULT 'Active',
+    "status" "ProductStatus" NOT NULL DEFAULT 'active',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -71,6 +71,15 @@ CREATE TABLE "Clients" (
     CONSTRAINT "Clients_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ClientProduct" (
+    "id" TEXT NOT NULL,
+    "clientId" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+
+    CONSTRAINT "ClientProduct_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 
@@ -86,6 +95,9 @@ CREATE UNIQUE INDEX "Products_productCode_key" ON "Products"("productCode");
 -- CreateIndex
 CREATE UNIQUE INDEX "Clients_clientCode_key" ON "Clients"("clientCode");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "ClientProduct_clientId_productId_key" ON "ClientProduct"("clientId", "productId");
+
 -- AddForeignKey
 ALTER TABLE "UserRoles" ADD CONSTRAINT "UserRoles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -94,3 +106,9 @@ ALTER TABLE "UserRoles" ADD CONSTRAINT "UserRoles_roleId_fkey" FOREIGN KEY ("rol
 
 -- AddForeignKey
 ALTER TABLE "Clients" ADD CONSTRAINT "Clients_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ClientProduct" ADD CONSTRAINT "ClientProduct_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Clients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ClientProduct" ADD CONSTRAINT "ClientProduct_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
