@@ -5,7 +5,6 @@ export interface CreateClientDto {
   contactName: string;
   contactEmail: string;
   supportTier?: SupportTier;
-  createBy: string;
   status?: ClientStatus;
   userId?: string;
 }

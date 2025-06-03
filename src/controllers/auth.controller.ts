@@ -39,10 +39,9 @@ class AuthController {
       token,
       message: SUCCESS_MESSAGES.USER_REGISTERED,
     });
-  };
-
-  public login = async (req: Request, res: Response) => {
+  }; public login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+
     const findUser = await prisma.users.findUnique({
       where: { email },
       select: { ...userSelectFields, password: true },
