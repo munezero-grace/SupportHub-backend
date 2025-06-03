@@ -5,15 +5,15 @@ import {
   HTTP_UNAUTHORIZED,
 } from "../constants/httpStatusCodes";
 
-const prisma = new PrismaClient();
-
-
-declare module "express-serve-static-core" {
-  interface Request {
-    user?: { id: string; role?: string };
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { id: string; role?: string };
+    }
   }
 }
 
+const prisma = new PrismaClient();
 
 export function requireRole(roleName: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
