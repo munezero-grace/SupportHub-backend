@@ -16,5 +16,7 @@ export const ERROR_MESSAGES = {
   CLIENT_NOT_FOUND: "Client not found",
   USER_NOT_FOUND: "User not found",
   CANNOT_DELETE_USER_WITH_CLIENTS: "Cannot delete user with associated clients",
-  USER_DELETE_FAILED: "Failed to delete user"
+  USER_DELETE_FAILED: "Failed to delete user",
+  NO_TOKEN: "No token provided",
+  INVALID_TOKEN: "Invalid token"
 };

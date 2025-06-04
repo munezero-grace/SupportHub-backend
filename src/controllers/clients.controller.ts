@@ -5,8 +5,8 @@ import {
   HTTP_CREATED,
   HTTP_OK,
   HTTP_NOT_FOUND,
-  HTTP_NO_CONTENT,
   HTTP_BAD_REQUEST,
+  HTTP_NO_CONTENT,
 } from "../constants/httpStatusCodes";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
@@ -14,7 +14,7 @@ import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 const clientService = new ClientService();
 
 export class ClientController {
-  async createClient(req: Request, res: Response) {
+  async createClient(req: Request, res: Response): Promise<Response> {
     try {
       const clientData: CreateClientDto = req.body;
 
@@ -42,16 +42,16 @@ export class ClientController {
     }
   }
 
-  async getAllClients(_req: Request, res: Response) {
+  async getAllClients(_req: Request, res: Response): Promise<Response> {
     const clients = await clientService.findAllClients();
 
-    res.status(HTTP_OK).json({
+    return res.status(HTTP_OK).json({
       status: "success",
       data: clients,
     });
   }
 
-  async getClientById(req: Request, res: Response) {
+  async getClientById(req: Request, res: Response): Promise<Response> {
     const { clientCode } = req.params;
     const client = await clientService.findClientById(clientCode);
 
@@ -68,25 +68,27 @@ export class ClientController {
     });
   }
 
-  async updateClient(req: Request, res: Response) {
+  async updateClient(req: Request, res: Response): Promise<Response> {
     const { clientCode } = req.params;
     const updateData = req.body;
     const client = await clientService.updateClient(clientCode, updateData);
-    res.status(HTTP_OK).json({
+    return res.status(HTTP_OK).json({
       status: "success",
       data: client,
       message: SUCCESS_MESSAGES.CLIENT_UPDATED,
     });
   }
 
-  async deleteClient(req: Request, res: Response) {
+  async deleteClient(req: Request, res: Response): Promise<Response> {
     const { clientCode } = req.params;
     await clientService.deleteClient(clientCode);
-
-    res.status(HTTP_NO_CONTENT).send();
+    return res.status(200).json({
+      status: "success",
+      message: SUCCESS_MESSAGES.CLIENT_DELETED,
+    });
   }
 
-  async updateClientStatus(req: Request, res: Response) {
+  async updateClientStatus(req: Request, res: Response): Promise<Response> {
     const { clientCode } = req.params;
     const { status } = req.body;
     if (!["active", "inactive"].includes(status)) {
@@ -102,21 +104,21 @@ export class ClientController {
     });
   }
 
-  async getProductsForClient(req: Request, res: Response) {
+  async getProductsForClient(req: Request, res: Response): Promise<Response> {
     const { clientCode } = req.params;
     const products = await clientService.getProductsForClient(clientCode);
-    res.status(HTTP_OK).json(products);
+    return res.status(HTTP_OK).json(products);
   }
 
-  async addProductToClient(req: Request, res: Response) {
+  async addProductToClient(req: Request, res: Response): Promise<Response> {
     const { clientCode, productId } = req.params;
     const clientProduct = await clientService.addProductToClient(clientCode, productId);
-    res.status(HTTP_CREATED).json(clientProduct);
+    return res.status(HTTP_CREATED).json(clientProduct);
   }
 
-  async removeProductFromClient(req: Request, res: Response) {
+  async removeProductFromClient(req: Request, res: Response): Promise<Response> {
     const { clientCode, productId } = req.params;
     await clientService.removeProductFromClient(clientCode, productId);
-    res.status(HTTP_NO_CONTENT).send();
+    return res.status(HTTP_NO_CONTENT).send();
   }
 }
