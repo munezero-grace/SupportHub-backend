@@ -16,32 +16,37 @@ declare global {
 const prisma = new PrismaClient();
 
 export function requireRole(roleName: string) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     const user = req.user as { id: string; role?: string } | undefined;
     if (!user || !user.id) {
-      return res.status(HTTP_UNAUTHORIZED).json({ message: "Unauthorized" });
+      res.status(HTTP_UNAUTHORIZED).json({ message: "Unauthorized" });
+      return;
     }
-
     if (user.role && user.role === roleName) {
-      return next();
+      next();
+      return;
     }
-
     const userRole = await prisma.userRoles.findFirst({
       where: { userId: user.id },
     });
     if (!userRole) {
-      return res
+      res
         .status(HTTP_ACCESS_DENIED)
         .json({ message: "Forbidden: No role assigned" });
+      return;
     }
     const role = await prisma.roles.findUnique({
       where: { id: userRole.roleId },
     });
     if (!role || role.name !== roleName) {
-      return res
+      res
         .status(HTTP_ACCESS_DENIED)
         .json({ message: `Forbidden: Requires ${roleName} role` });
+      return;
     }
     next();
   };
