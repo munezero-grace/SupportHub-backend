@@ -1,57 +1,42 @@
 import { Router } from "express";
 import { ClientController } from "../controllers/clients.controller";
+import { validateRequest } from "../middlewares/validateRequest";
 import {
-  createClientValidations,
-  updateClientValidations,
-} from "../validations/client.validator";
+  createClientSchema,
+  updateClientSchema,
+} from "../validations/client.validation";
+import { WrapAsync } from "../middlewares/wrapAsync";
 import { requireRole } from "../middlewares/requireRole";
 import { authenticateUser } from "../middlewares/authenticateUser";
 
 const router = Router();
 const clientController = new ClientController();
 
-router.get(
-  "/",
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.getAllClients
-);
+router
+  .route("/")
+  .get(WrapAsync(authenticateUser), WrapAsync(clientController.getAllClients))
+  .post(
+    WrapAsync(authenticateUser),
+    WrapAsync(requireRole("super_admin")),
+    validateRequest(createClientSchema),
+    WrapAsync(clientController.createClient)
+  );
 
-router.post(
-  "/",
-  createClientValidations,
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.createClient
-);
-
-router.get(
-  "/:clientCode",
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.getClientById
-);
-
-router.put(
-  "/:clientCode",
-  updateClientValidations,
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.updateClient
-);
-
-router.delete(
-  "/:clientCode",
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.deleteClient
-);
+router.route("/:clientCode")
+  .get(WrapAsync(authenticateUser), WrapAsync(clientController.getClientById))
+  .patch(
+    WrapAsync(authenticateUser),
+    WrapAsync(requireRole("super_admin")),
+    validateRequest(updateClientSchema),
+    WrapAsync(clientController.updateClient)
+  )
+  .delete(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.deleteClient));
 
 router.patch(
-  "/:clientCode/status",
-  authenticateUser,
-  requireRole("super_admin"),
-  clientController.updateClientStatus
+  "/:clientId/status",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(clientController.updateClientStatus)
 );
 
 export default router;

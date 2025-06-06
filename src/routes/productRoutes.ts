@@ -7,16 +7,54 @@ import {
   updateProductValidation
 } from '../validations/product.validation';
 import { WrapAsync } from '../middlewares/wrapAsync';
+import { requireRole } from '../middlewares/requireRole';
+import { authenticateUser } from '../middlewares/authenticateUser';
 
 const router = Router();
 
-router.post('/', validateRequest(productValidation), WrapAsync(ProductController.createProduct));
-router.get('/', WrapAsync(ProductController.getAllProducts));
-router.get('/:productCode', WrapAsync(ProductController.getProductByCode));
-router.put('/:id', validateRequest(updateProductValidation), WrapAsync(ProductController.updateProduct));
-router.delete('/:id', WrapAsync(ProductController.deleteProduct));
-router.post('/:id/clients/:clientId', WrapAsync(ProductController.addClientToProduct));
-router.delete('/:id/clients/:clientId', WrapAsync(ProductController.removeClientFromProduct));
+router.post('/',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  validateRequest(productValidation),
+  WrapAsync(ProductController.createProduct)
+);
+
+router.get('/',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  WrapAsync(ProductController.getAllProducts)
+);
+
+router.get('/:productCode',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  WrapAsync(ProductController.getProductByCode)
+);
+
+router.put('/:id',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  validateRequest(updateProductValidation),
+  WrapAsync(ProductController.updateProduct)
+);
+
+router.delete('/:id',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  WrapAsync(ProductController.deleteProduct)
+);
+
+router.post('/:id/clients/:clientId',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  WrapAsync(ProductController.addClientToProduct)
+);
+
+router.delete('/:id/clients/:clientId',
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole('super_admin')),
+  WrapAsync(ProductController.removeClientFromProduct)
+);
 
 router.use(errorHandler);
 

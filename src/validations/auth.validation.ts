@@ -30,9 +30,8 @@ export const signupSchema = Joi.object({
 });
 
 export const loginSchema = Joi.object({
-  email: Joi.string().email().pattern(gmailRegex).required().messages({
+  email: Joi.string().email().required().messages({
     "string.email": "email must be a valid email",
-    "string.pattern.base": "email must be a valid Gmail address (@gmail.com)",
     "string.empty": "email is required",
   }),
 
