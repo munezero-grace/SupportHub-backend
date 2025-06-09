@@ -17,8 +17,20 @@ export const ERROR_MESSAGES = {
   USER_NOT_FOUND: "User not found",
   CANNOT_DELETE_USER_WITH_CLIENTS: "Cannot delete user with associated clients",
   USER_DELETE_FAILED: "Failed to delete user",
+  USER_EMAIL_EXISTS: "A user with this email already exists",
   TOKEN_EXPIRED: "Token has expired",
-   INVALID_TOKEN: "Invalid token",
+  INVALID_TOKEN: "Invalid token",
   NO_TOKEN: "No token provided",
   GENERAL_ERROR: "An error occurred. Please try again later.",
+  INVALID_PRODUCT_DATA: "Invalid product data returned from service",
+  PRODUCT_RETRIEVE_ALL_FAILED: "Failed to retrieve products",
+  PRODUCT_CLIENT_IDS_REQUIRED: "Product ID and Client ID are required",
+  PRODUCT_ADD_CLIENT_FAILED: "Failed to add client to product",
+  CLIENT_CREATE_FAILED: "Failed to create client",
+  UNEXPECTED_ERROR: "An unexpected error occurred.",
+};
+
+export const RESPONSE_STATUS = {
+  SUCCESS: "success",
+  ERROR: "error",
 };

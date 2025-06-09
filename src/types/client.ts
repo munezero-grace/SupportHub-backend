@@ -8,3 +8,11 @@ export interface CreateClientDto {
   status?: ClientStatus;
   userId?: string;
 }
+
+export interface SocialClientDto {
+email: string;
+firstName: string;
+lastName: string;
+provider: string;
+providerId: string;
+}

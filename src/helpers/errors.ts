@@ -5,8 +5,6 @@ export class AuthError extends Error {
     super(message);
     this.name = "AuthError";
     this.statusCode = statusCode;
-
-    // Maintain proper prototype chain 
     Object.setPrototypeOf(this, AuthError.prototype);
   }
 }

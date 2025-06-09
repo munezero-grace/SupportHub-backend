@@ -61,29 +61,29 @@ enum ClientStatus {
 }
 
 model Products {
-  id          String        @id @default(uuid())
-  productCode String        @unique
-  name        String
-  description String?
-  status      ProductStatus @default(active)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id             String          @id @default(uuid())
+  productCode    String          @unique
+  name           String
+  description    String?
+  status         ProductStatus   @default(active)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   clientProducts ClientProduct[]
 
   @@map("Products")
 }
 
 model Clients {
-  id          String       @id @default(uuid())
-  clientCode  String       @unique
-  companyName String
-  supportTier SupportTier  @default(standard)
-  status      ClientStatus @default(active)
-  createdBy   String       @default(uuid())
-  userId      String       @default(uuid())
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  user        Users?       @relation(fields: [userId], references: [id])
+  id             String          @id @default(uuid())
+  clientCode     String          @unique
+  companyName    String?
+  supportTier    SupportTier     @default(standard)
+  status         ClientStatus    @default(inactive)
+  createdBy      String          @default(uuid())
+  userId         String          @default(uuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  user           Users?          @relation(fields: [userId], references: [id])
   clientProducts ClientProduct[]
 
   @@map("Clients")

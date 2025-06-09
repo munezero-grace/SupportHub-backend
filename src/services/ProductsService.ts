@@ -1,4 +1,4 @@
-import { PrismaClient,Products } from '@prisma/client';
+import { PrismaClient, Products } from '@prisma/client';
 import { ProductCreateInput, ProductUpdateInput } from '../types/product';
 
 const prisma = new PrismaClient();
@@ -25,30 +25,67 @@ export class ProductsService {
         status: data.status.toLowerCase() as 'active' | 'inactive',
       }
     });
-  }
+  } async getAllProducts(): Promise<Products[]> {
+    try {
+      const products = await prisma.products.findMany({
+        orderBy: [{ productCode: 'desc' }],
+        include: {
+          clientProducts: {
+            include: {
+              client: {
+                select: {
+                  id: true,
+                  clientCode: true,
+                  companyName: true,
+                  status: true,
+                  supportTier: true,
+                  user: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                      email: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
 
-  async getAllProducts(): Promise<Products[]> {
-    return prisma.products.findMany({
-      orderBy: [{ productCode: 'desc' }],
-      include: {
-        clientProducts: {
-          include: {
-            client: true,
-          },
-        },
-      },
-    });
+      if (!products) {
+        throw new Error('Failed to retrieve products from database');
+      }
+      return products;
+    } catch (error) {
+      console.error('Error in ProductsService.getAllProducts:', error);
+      throw error;
+    }
   }
 
   async getProductById(id: string): Promise<Products | null> {
     return prisma.products.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        clientProducts: {
+          include: {
+            client: true
+          }
+        }
+      }
     });
   }
 
   async getProductByCode(productCode: string): Promise<Products | null> {
     return prisma.products.findUnique({
-      where: { productCode }
+      where: { productCode },
+      include: {
+        clientProducts: {
+          include: {
+            client: true
+          }
+        }
+      }
     });
   }
 
@@ -79,19 +116,42 @@ export class ProductsService {
     });
   }
   async addClientToProduct(productId: string, clientId: string) {
-    return prisma.clientProduct.upsert({
-      where: {
-        clientId_productId: {
-          clientId,
+    try {
+      const product = await prisma.products.findUnique({
+        where: { id: productId }
+      });
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      const client = await prisma.clients.findUnique({
+        where: { id: clientId }
+      });
+      if (!client) {
+        throw new Error('Client not found');
+      }
+      return prisma.clientProduct.upsert({
+        where: {
+          clientId_productId: {
+            clientId,
+            productId,
+          }
+        },
+        update: {},
+        create: {
           productId,
+          clientId,
+        },
+        include: {
+          client: true,
+          product: true
         }
-      },
-      update: {}, 
-      create: {
-        productId,
-        clientId,
-      },
-    });
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to add client to product');
+    }
   }
 
   async removeClientFromProduct(productId: string, clientId: string) {

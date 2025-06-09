@@ -2,37 +2,24 @@ import { PrismaClient, Clients } from "@prisma/client";
 import { CreateClientDto } from "../types/client";
 import * as bcrypt from "bcryptjs";
 import { UserRole } from "../types";
+import { generateClientCode } from "../helpers/generateClientCode";
+import { ERROR_MESSAGES } from "../constants/response/errors";
 
 const prisma = new PrismaClient();
 
 export class ClientService {
-  async generateClientCode(): Promise<string> {
-    const lastClient = await prisma.clients.findFirst({
-      orderBy: { clientCode: "desc" },
-    });
-
-    if (!lastClient) return "C-1001";
-
-    const lastClientId = lastClient.clientCode;
-    const lastNumber = parseInt(lastClientId.split("-")[1]);
-    const nextNumber = lastNumber + 1;
-
-    return `C-${nextNumber}`;
-  }
-
   async createClient(data: CreateClientDto): Promise<Clients> {
     try {
-      // Check if user with email already exists
       const existingUser = await prisma.users.findUnique({
         where: { email: data.contactEmail },
       });
 
       if (existingUser) {
-        throw new Error("A user with this email already exists");
+        throw new Error(ERROR_MESSAGES.USER_EMAIL_EXISTS);
       }
 
-      const clientCode = await this.generateClientCode();
-      const { contactName, contactEmail } = data;      // Use transaction to ensure both user and client are created or neither is
+      const clientCode = await generateClientCode(prisma);
+      const { contactName, contactEmail } = data;
       return await prisma.$transaction(async (tx) => {
         const createUser = await tx.users.create({
           data: {
@@ -46,7 +33,6 @@ export class ClientService {
           },
         });
 
-        // Assign client role within the transaction
         let clientRole = await tx.roles.findUnique({
           where: { name: UserRole.CLIENT },
         });
@@ -74,13 +60,7 @@ export class ClientService {
             userId: createUser.id,
           },
           include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
+            user: true
           },
         });
 
@@ -95,59 +75,76 @@ export class ClientService {
     }
   }
 
-  async findAllClients(): Promise<Clients[]> {
-    return prisma.clients.findMany({
-      orderBy: { createdAt: "desc" },
+  async findUserClient(userId: string): Promise<Clients | null> {
+    return prisma.clients.findFirst({
+      where: { userId },
       include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        user: true,
         clientProducts: {
           include: {
-            product: true,
-          },
-        },
+            product: true
+          }
+        }
       },
     });
+  }
+
+  async findAllClients(): Promise<Clients[]> {
+    try {
+      return prisma.clients.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          clientProducts: {
+            include: {
+              product: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error finding all clients:", error);
+      throw new Error("Failed to fetch clients");
+    }
   }
 
   async findClientById(clientCode: string): Promise<Clients | null> {
-    return prisma.clients.findUnique({
-      where: { clientCode },
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
+    try {
+      return prisma.clients.findUnique({
+        where: { clientCode },
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
           },
-        },
-        clientProducts: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findClientByUUID(clientId: string): Promise<Clients | null> {
-    return prisma.clients.findUnique({
-      where: { id: clientId },
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+          clientProducts: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  productCode: true,
+                  name: true,
+                  description: true,
+                  status: true
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error finding client by id:", error);
+      throw new Error("Failed to fetch client");
+    }
   }
 
   async updateClient(
@@ -161,40 +158,29 @@ export class ClientService {
     if (!existingClient) {
       throw new Error("Client not found");
     }
-
     const allowedFields: (keyof Clients)[] = [
       "companyName",
       "supportTier",
       "status",
     ];
-
     const filteredData: Record<string, any> = {};
     for (const key of allowedFields) {
       if (data[key] !== undefined && typeof data[key] === "string") {
         filteredData[key] = data[key];
       }
-    }
-
-    try {
-      return await prisma.clients.update({
-        where: { clientCode },
-        data: filteredData,
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to update client: ${error.message}`);
-      }
-      throw new Error("Failed to update client");
-    }
+    } return await prisma.clients.update({
+      where: { clientCode },
+      data: filteredData,
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      },
+    });
   }
 
   async updateClientStatus(
@@ -218,7 +204,6 @@ export class ClientService {
 
   async deleteClient(clientCode: string): Promise<Clients> {
     return prisma.$transaction(async (tx) => {
-      // Get the client first to verify it exists
       const client = await tx.clients.findUnique({
         where: { clientCode },
         include: {
@@ -230,13 +215,9 @@ export class ClientService {
       if (!client) {
         throw new Error("Client not found");
       }
-
-      // Delete all client-product associations
       await tx.clientProduct.deleteMany({
         where: { clientId: client.id },
       });
-
-      // Delete the client
       const deletedClient = await tx.clients.delete({
         where: { clientCode },
       });

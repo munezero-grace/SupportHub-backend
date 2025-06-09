@@ -13,3 +13,4 @@ export const HTTP_TIMEOUT = 408;
 export const HTTP_EXIST = 409;
 
 export const HTTP_SERVER_ERROR = 500;
+export const HTTP_INTERNAL_SERVER_ERROR= 501;
