@@ -46,8 +46,8 @@ export class ClientService {
         await tx.userRoles.create({
           data: {
             userId: createUser.id,
-            roleId: clientRole.id
-          }
+            roleId: clientRole.id,
+          },
         });
 
         const createdCompany = await tx.clients.create({
@@ -60,7 +60,7 @@ export class ClientService {
             userId: createUser.id,
           },
           include: {
-            user: true
+            user: true,
           },
         });
 
@@ -82,9 +82,24 @@ export class ClientService {
         user: true,
         clientProducts: {
           include: {
-            product: true
-          }
-        }
+            product: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findClientByIdField(clientId: string): Promise<Clients | null> {
+    return prisma.clients.findUnique({
+      where: { id: clientId },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
       },
     });
   }
@@ -98,15 +113,15 @@ export class ClientService {
             select: {
               firstName: true,
               lastName: true,
-              email: true
-            }
+              email: true,
+            },
           },
           clientProducts: {
             include: {
-              product: true
-            }
-          }
-        }
+              product: true,
+            },
+          },
+        },
       });
     } catch (error) {
       console.error("Error finding all clients:", error);
@@ -123,8 +138,8 @@ export class ClientService {
             select: {
               firstName: true,
               lastName: true,
-              email: true
-            }
+              email: true,
+            },
           },
           clientProducts: {
             include: {
@@ -134,17 +149,32 @@ export class ClientService {
                   productCode: true,
                   name: true,
                   description: true,
-                  status: true
-                }
-              }
-            }
-          }
-        }
+                  status: true,
+                },
+              },
+            },
+          },
+        },
       });
     } catch (error) {
       console.error("Error finding client by id:", error);
       throw new Error("Failed to fetch client");
     }
+  }
+
+  async findClientByUserId(userId: string): Promise<Clients | null> {
+    return prisma.clients.findFirst({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   async updateClient(
@@ -168,7 +198,8 @@ export class ClientService {
       if (data[key] !== undefined && typeof data[key] === "string") {
         filteredData[key] = data[key];
       }
-    } return await prisma.clients.update({
+    }
+    return await prisma.clients.update({
       where: { clientCode },
       data: filteredData,
       include: {
@@ -176,9 +207,9 @@ export class ClientService {
           select: {
             firstName: true,
             lastName: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
     });
   }

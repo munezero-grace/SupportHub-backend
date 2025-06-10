@@ -15,17 +15,19 @@ enum UserRoleEnum {
 }
 
 model Users {
-  id         String      @id @default(uuid())
-  firstName  String
-  lastName   String
-  email      String      @unique
-  password   String?
-  provider   String?
-  providerId String?
-  userRoles  UserRoles[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  Clients    Clients[]
+  id          String        @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String        @unique
+  password    String?
+  provider    String?
+  providerId  String?
+  userRoles   UserRoles[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Clients     Clients[]
+  Tickets     Tickets[]
+  UserTickets UserTickets[]
 }
 
 model Roles {
@@ -69,6 +71,7 @@ model Products {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   clientProducts ClientProduct[]
+  Tickets        Tickets[]
 
   @@map("Products")
 }
@@ -85,6 +88,7 @@ model Clients {
   updatedAt      DateTime        @updatedAt
   user           Users?          @relation(fields: [userId], references: [id])
   clientProducts ClientProduct[]
+  Tickets        Tickets[]
 
   @@map("Clients")
 }
@@ -98,4 +102,53 @@ model ClientProduct {
 
   @@unique([clientId, productId])
   @@map("ClientProduct")
+}
+
+enum StatusEnum {
+  in_progress
+  new
+  assigned
+  awaiting_client
+  resolved
+}
+
+enum PriorityEnum {
+  medium
+  low
+  high
+}
+
+model Tickets {
+  id          String        @id @default(uuid())
+  ticketCode  String        @unique
+  title       String
+  status      StatusEnum    @default(in_progress)
+  priority    PriorityEnum  @default(medium)
+  createdBy   String?
+  imageUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  owner       Users?        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  UserTickets UserTickets[]
+
+  clientId  String?
+  productId String?
+  client    Clients?  @relation(fields: [clientId], references: [id])
+  product   Products? @relation(fields: [productId], references: [id])
+
+  @@map("Tickets")
+}
+
+model UserTickets {
+  id        String   @id @default(uuid())
+  userId    String
+  ticketId  String
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket    Tickets  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clientId  String?
+
+  @@unique([userId, ticketId])
+  @@map("UserTickets")
 }

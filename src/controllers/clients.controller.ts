@@ -39,6 +39,25 @@ export class ClientController {
     }
   }
 
+   async getClientByUserId(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ status: "error", message: "Unauthorized" });
+      }
+      const client = await clientService.findClientByUserId(userId);
+
+      if (!client) {
+        return res.status(404).json({ status: "error", message: "Client not found" });
+      }
+      return res.status(HTTP_OK).json({ status: "success", data: client });
+    } catch (error) {
+      console.error("getClientByUserId error:", error);
+      return res.status(500).json({ status: "error", message: "Failed to get client" });
+    }
+  }
+
   async getAllClients(_req: Request, res: Response) {
     const clients = await clientService.findAllClients(); res.status(HTTP_OK).json({
       status: RESPONSE_STATUS.SUCCESS,
