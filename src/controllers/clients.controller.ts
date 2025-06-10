@@ -8,7 +8,7 @@ import {
   HTTP_NO_CONTENT,
   HTTP_BAD_REQUEST,
 } from "../constants/httpStatusCodes";
-import { ERROR_MESSAGES } from "../constants/response/errors";
+import { ERROR_MESSAGES, RESPONSE_STATUS } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 
 const clientService = new ClientService();
@@ -17,56 +17,46 @@ export class ClientController {
   async createClient(req: Request, res: Response) {
     try {
       const clientData: CreateClientDto = req.body;
-      console.log('Creating client with data:', clientData);
-
-      const client = await clientService.createClient(clientData);
-
-      return res.status(HTTP_CREATED).json({
-        status: "success",
+      const client = await clientService.createClient(clientData); return res.status(HTTP_CREATED).json({
+        status: RESPONSE_STATUS.SUCCESS,
         data: client,
         message: SUCCESS_MESSAGES.CLIENT_CREATED,
       });
     } catch (error) {
-      console.error('Error in createClient controller:', error);
-
       if (error instanceof Error) {
-        if (error.message === "A user with this email already exists") {
+        if (error.message === ERROR_MESSAGES.USER_EMAIL_EXISTS) {
           return res.status(HTTP_BAD_REQUEST).json({
-            status: "error",
-            message: "A user with this email already exists",
+            status: RESPONSE_STATUS.ERROR,
+            message: ERROR_MESSAGES.USER_EMAIL_EXISTS,
           });
         }
       }
 
       return res.status(500).json({
-        status: "error",
-        message: error instanceof Error ? error.message : "Failed to create client",
+        status: RESPONSE_STATUS.ERROR,
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.CLIENT_CREATE_FAILED,
       });
     }
   }
 
   async getAllClients(_req: Request, res: Response) {
-    const clients = await clientService.findAllClients();
-
-    res.status(HTTP_OK).json({
-      status: "success",
+    const clients = await clientService.findAllClients(); res.status(HTTP_OK).json({
+      status: RESPONSE_STATUS.SUCCESS,
       data: clients,
     });
   }
 
   async getClientById(req: Request, res: Response) {
     const { clientCode } = req.params;
-    const client = await clientService.findClientById(clientCode);
-
-    if (!client) {
+    const client = await clientService.findClientById(clientCode); if (!client) {
       return res.status(HTTP_NOT_FOUND).json({
-        status: "error",
+        status: RESPONSE_STATUS.ERROR,
         message: ERROR_MESSAGES.CLIENT_NOT_FOUND,
       });
     }
 
     return res.status(HTTP_OK).json({
-      status: "success",
+      status: RESPONSE_STATUS.SUCCESS,
       data: client,
     });
   }
@@ -74,43 +64,41 @@ export class ClientController {
   async updateClient(req: Request, res: Response) {
     try {
       const { clientCode } = req.params;
-      const updateData = req.body;
-      const client = await clientService.updateClient(clientCode, updateData);
+      const updateData = req.body; const client = await clientService.updateClient(clientCode, updateData);
       return res.status(HTTP_OK).json({
-        status: "success",
+        status: RESPONSE_STATUS.SUCCESS,
         data: client,
         message: SUCCESS_MESSAGES.CLIENT_UPDATED,
       });
     } catch (error) {
       if (error instanceof Error) {
         return res.status(HTTP_BAD_REQUEST).json({
-          status: "error",
+          status: RESPONSE_STATUS.ERROR,
           message: error.message
         });
       }
       return res.status(HTTP_BAD_REQUEST).json({
-        status: "error",
+        status: RESPONSE_STATUS.ERROR,
         message: ERROR_MESSAGES.GENERAL_ERROR
       });
     }
   }
   async deleteClient(req: Request, res: Response) {
     try {
-      const { clientCode } = req.params;
-      await clientService.deleteClient(clientCode);
+      const { clientCode } = req.params; await clientService.deleteClient(clientCode);
       return res.status(HTTP_OK).json({
-        status: "success",
+        status: RESPONSE_STATUS.SUCCESS,
         message: SUCCESS_MESSAGES.CLIENT_DELETED
       });
     } catch (error) {
       if (error instanceof Error) {
         return res.status(HTTP_BAD_REQUEST).json({
-          status: "error",
+          status: RESPONSE_STATUS.ERROR,
           message: error.message
         });
       }
       return res.status(HTTP_BAD_REQUEST).json({
-        status: "error"
+        status: RESPONSE_STATUS.ERROR
       });
     }
   }
@@ -121,11 +109,11 @@ export class ClientController {
     if (!["active", "inactive"].includes(status)) {
       return res
         .status(400)
-        .json({ status: "error", message: "Invalid status value" });
+        .json({ status: RESPONSE_STATUS.ERROR, message: "Invalid status value" });
     }
     const client = await clientService.updateClientStatus(clientCode, status);
     return res.status(200).json({
-      status: "success",
+      status: RESPONSE_STATUS.SUCCESS,
       data: client,
       message: `Client status updated to ${status}`,
     });

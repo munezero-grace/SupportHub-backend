@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { generateToken } from "../helpers/generateToken";
+import { generateClientCode } from "../helpers/generateClientCode";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 import { UserRole } from "../types";
@@ -39,7 +40,9 @@ class AuthController {
       token,
       message: SUCCESS_MESSAGES.USER_REGISTERED,
     });
-  }; public login = async (req: Request, res: Response) => {
+  };
+
+  public login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     const findUser = await prisma.users.findUnique({
@@ -88,15 +91,73 @@ class AuthController {
     const { email, firstName, lastName, provider, providerId } = req.body;
     let user = await prisma.users.findUnique({
       where: { email },
-      select: userSelectFields,
+      select: {
+        ...userSelectFields,
+        Clients: true
+      },
     });
-    if (!user) {
-      user = await prisma.users.create({
-        data: { email, firstName, lastName, provider, providerId },
-        select: userSelectFields,
+    if (user) {
+      user = await prisma.users.update({
+        where: { email },
+        data: {
+          firstName,
+          lastName,
+          provider,
+          providerId
+        },
+        select: {
+          ...userSelectFields,
+          Clients: true
+        },
       });
+    } else {
+      user = await prisma.$transaction(async (tx) => {
+        const newUser = await tx.users.create({
+          data: {
+            email,
+            firstName,
+            lastName,
+            provider,
+            providerId
+          },
+          select: {
+            ...userSelectFields,
+            Clients: true
+          },
+        });
+        let clientRole = await tx.roles.findUnique({
+          where: { name: UserRole.CLIENT },
+        });
 
-      await this.assignClientRole(user.id);
+        if (!clientRole) {
+          clientRole = await tx.roles.create({
+            data: { name: UserRole.CLIENT },
+          });
+        }
+
+        await tx.userRoles.create({
+          data: {
+            userId: newUser.id,
+            roleId: clientRole.id,
+          },
+        });
+
+        if (newUser.Clients.length === 0) {
+          const clientCode = await generateClientCode(tx);
+          await tx.clients.create({
+            data: {
+              clientCode,
+              companyName: '',
+              supportTier: "standard",
+              status: "active",
+              createdBy: newUser.id,
+              userId: newUser.id,
+            },
+          });
+        }
+
+        return newUser;
+      });
     }
 
     const userRole = await prisma.userRoles.findFirst({
@@ -105,15 +166,13 @@ class AuthController {
 
     const role = userRole
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
-      : null;
-
-    const token = generateToken({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: role?.name as UserRole,
-    });
+      : null; const token = generateToken({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: role?.name as UserRole
+      });
 
     return res.status(HTTP_OK).json({
       token,

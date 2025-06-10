@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { HTTP_SERVER_ERROR } from "../constants/httpStatusCodes";
+import { ERROR_MESSAGES } from "../constants/response/errors";
 
 export const errorHandler = (
   err: Error & { status?: number },
@@ -8,7 +9,7 @@ export const errorHandler = (
   _next: NextFunction
 ) => {
   res.status(HTTP_SERVER_ERROR).json({
-    message: "An unexpected error occurred.",
+    message: ERROR_MESSAGES.UNEXPECTED_ERROR,
     ...(process.env.NODE_ENV === "development" && { error: err.message }),
   });
 };

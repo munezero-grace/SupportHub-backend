@@ -15,9 +15,7 @@ export async function authenticateUser(
             code: 'NO_TOKEN'
         });
     }
-
     const token = authHeader.split(" ")[1];
-
     try {
         const secret = process.env.JWT_SECRET || "testsecret";
         const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
