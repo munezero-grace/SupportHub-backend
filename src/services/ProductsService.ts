@@ -164,4 +164,16 @@ export class ProductsService {
       },
     });
   }
+    async getProductsByClient(clientId: string): Promise<Products[]> {
+    return prisma.products.findMany({
+      where: {
+        clientProducts: {
+          some: {
+            clientId: clientId
+          }
+        }
+      },
+      orderBy: [{ productCode: 'desc' }],
+    });
+  }
 }

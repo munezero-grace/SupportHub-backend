@@ -4,7 +4,7 @@ import { HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
 
 export const validateRequest = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const { error } = schema.validate(req.body, { abortEarly: false });
+    const { error } = schema.validate(req.body, { abortEarly: false, allowUnknown: true });
     if (error) {
       const errors = error.details.map((detail) =>
         detail.message.replace(/['"]+/g, "")

@@ -25,6 +25,11 @@ router.get('/',
   WrapAsync(ProductController.getAllProducts)
 );
 
+router.get('/client-products',
+  WrapAsync(authenticateUser),
+  WrapAsync(ProductController.getProductsByClient)
+);
+
 router.get('/:productCode',
   WrapAsync(authenticateUser),
   WrapAsync(requireRole('super_admin')),

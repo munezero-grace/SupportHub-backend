@@ -50,6 +50,13 @@ export class UserService {
     }
   }
 
+    async findClientByUUID(clientId: string) {
+    const client = await prisma.clients.findUnique({
+      where: { id: clientId },
+    });
+    return client;
+  }
+
   async deleteUser(userId: string) {
     try {
       await prisma.$transaction(async (tx) => {

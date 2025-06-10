@@ -28,6 +28,10 @@ export const ERROR_MESSAGES = {
   PRODUCT_ADD_CLIENT_FAILED: "Failed to add client to product",
   CLIENT_CREATE_FAILED: "Failed to create client",
   UNEXPECTED_ERROR: "An unexpected error occurred.",
+    USER_ID_REQUIRED: "User ID is required.",
+  CLIENT_NOT_FOUND_FOR_USER: "Client not found for user.",
+  FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT: "Failed to retrieve products for client.",
+  FAILED_TO_RETRIEVE_PRODUCTS: "Failed to retrieve products."
 };
 
 export const RESPONSE_STATUS = {

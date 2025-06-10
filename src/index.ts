@@ -9,6 +9,7 @@ import clientRoutes from "./routes/clientRoutes";
 import { HTTP_OK } from "./constants/httpStatusCodes";
 import productRoutes from "./routes/productRoutes";
 import { setupSwagger } from "./documentations/swagger-docs";
+import ticketsRoutes from "./routes/ticketsRoutes";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ app.use(limiter);
 if (process.env.NODE_ENV === "test") {
   const mockAuth = require("./middlewares/mockAuth").default;
   app.use((req, res, next) => {
-    // Skip auth and health check routes
+    
     if (req.path.startsWith("/api/auth") || req.path === "/api") return next();
     return mockAuth(req, res, next);
   });
@@ -41,6 +42,7 @@ if (process.env.NODE_ENV === "test") {
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
+app.use("/api/tickets", ticketsRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({
