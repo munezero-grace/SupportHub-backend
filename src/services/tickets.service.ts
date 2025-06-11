@@ -29,6 +29,17 @@ class TicketsService {
       }
     }
 
+    if (productId) {
+      const productExists = await prisma.products.findUnique({
+        where: { id: productId },
+      });
+      if (!productExists) {
+        throw new Error(`Product with id ${productId} does not exist`);
+      }
+    } else {
+      throw new Error('productId is required');
+    }
+
     const ticketCode = await this.getNextTicketCode();
 
     const ticket = await prisma.tickets.create({
@@ -96,6 +107,14 @@ class TicketsService {
   }
 
   static async updateTicket(id: string, updateData: any) {
+    if (updateData.productId) {
+      const productExists = await prisma.products.findUnique({
+        where: { id: updateData.productId },
+      });
+      if (!productExists) {
+        throw new Error(`Product with id ${updateData.productId} does not exist`);
+      }
+    }
     return await prisma.tickets.update({
       where: { id },
       data: updateData,

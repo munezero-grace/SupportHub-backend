@@ -116,6 +116,7 @@ enum PriorityEnum {
   medium
   low
   high
+  critical
 }
 
 model Tickets {
