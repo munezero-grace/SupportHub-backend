@@ -22,6 +22,13 @@ router
     WrapAsync(clientController.createClient)
   );
 
+router.get("/users/:userId", WrapAsync(authenticateUser), WrapAsync(clientController.getClientByUserId));
+router.get("/:clientCode/products", WrapAsync(authenticateUser), WrapAsync(clientController.getProductsForClient));
+
+router.route("/:clientCode/products/:productId")
+  .post(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.addProductToClient))
+  .delete(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.removeProductFromClient));
+
 router.route("/:clientCode")
   .get(WrapAsync(authenticateUser), WrapAsync(clientController.getClientById))
   .patch(

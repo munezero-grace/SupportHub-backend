@@ -33,3 +33,8 @@ export interface ProductCreateInput {
 }
 
 export type ProductUpdateInput = Partial<ProductCreateInput>;
+
+export type ErrorResponse = {
+  error: string;
+}
+

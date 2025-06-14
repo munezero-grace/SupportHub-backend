@@ -10,6 +10,7 @@ import {
 } from "../constants/httpStatusCodes";
 import { ERROR_MESSAGES, RESPONSE_STATUS } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
+import { c } from "../constants/errorMessages";
 
 const clientService = new ClientService();
 
@@ -39,22 +40,30 @@ export class ClientController {
     }
   }
 
-   async getClientByUserId(req: Request, res: Response) {
+  async getClientByUserId(req: Request, res: Response) {
     try {
       const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ status: "error", message: "Unauthorized" });
+        return res.status(401).json({
+          status: RESPONSE_STATUS.ERROR,
+          message: ERROR_MESSAGES.INVALID_CREDENTIALS
+        });
       }
       const client = await clientService.findClientByUserId(userId);
 
       if (!client) {
-        return res.status(404).json({ status: "error", message: "Client not found" });
+        return res.status(HTTP_NOT_FOUND).json({
+          status: RESPONSE_STATUS.ERROR,
+          message: ERROR_MESSAGES.CLIENT_NOT_FOUND
+        });
       }
       return res.status(HTTP_OK).json({ status: "success", data: client });
     } catch (error) {
-      console.error("getClientByUserId error:", error);
-      return res.status(500).json({ status: "error", message: "Failed to get client" });
+      return res.status(500).json({
+        status: RESPONSE_STATUS.ERROR,
+        message: ERROR_MESSAGES.GENERAL_ERROR
+      });
     }
   }
 
@@ -136,12 +145,20 @@ export class ClientController {
       data: client,
       message: `Client status updated to ${status}`,
     });
-  }
-
-  async getProductsForClient(req: Request, res: Response) {
-    const { clientCode } = req.params;
-    const products = await clientService.getProductsForClient(clientCode);
-    res.status(HTTP_OK).json(products);
+  } async getProductsForClient(req: Request, res: Response) {
+    try {
+      const { clientCode } = req.params;
+      const products = await clientService.getProductsForClient(clientCode);
+      return res.status(HTTP_OK).json({
+        status: RESPONSE_STATUS.SUCCESS,
+        data: { products }
+      });
+    } catch (error) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: RESPONSE_STATUS.ERROR,
+        message: error instanceof Error ? error.message : c.FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT
+      });
+    }
   }
 
   async addProductToClient(req: Request, res: Response) {

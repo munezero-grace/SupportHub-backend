@@ -10,42 +10,57 @@ import {
 } from '../constants/httpStatusCodes';
 import { ERROR_MESSAGES } from '../constants/response/errors';
 import { SUCCESS_MESSAGES } from '../constants/response/successMessages';
+import { c } from '../constants/errorMessages';
 import { ClientService } from '../services/client.service';
 
 const productService = new ProductsService();
 const clientService = new ClientService();
 
-class ProductsController {
-    static async getAllProducts(_req: Request, res: Response): Promise<void> {
+export default class ProductsController {
+    static async getProductsByClientCode(req: Request, res: Response): Promise<Response> {
+        try {
+            const { clientCode } = req.params;
+            if (!clientCode) {
+                return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.CLIENT_CODE_IS_REQUIRED });
+            }
+
+            const products = await productService.getProductsByClient(clientCode);
+            return res.status(HTTP_OK).json(products);
+        } catch (error) {
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ error: c.FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT });
+        }
+    }
+
+    static async getAllProducts(_req: Request, res: Response): Promise<Response> {
         try {
             const products = await productService.getAllProducts();
             if (!products || !Array.isArray(products)) {
-                throw new Error(ERROR_MESSAGES.INVALID_PRODUCT_DATA);
+                return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.INVALID_PRODUCT_DATA });
             }
-            res.status(HTTP_OK).json(products);
+            return res.status(HTTP_OK).json(products);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.PRODUCT_RETRIEVE_ALL_FAILED;
-            res.status(HTTP_BAD_REQUEST).json({ error: errorMessage });
+            return res.status(HTTP_BAD_REQUEST).json({ error: errorMessage });
         }
     }
 
-     static async getProductsByClient(req: Request, res: Response): Promise<Response> {
-    try {
-        const userId = req.user?.id; 
-        if (!userId) {
-            return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.USER_ID_REQUIRED });
-        }
+    static async getProductsByClient(req: Request, res: Response): Promise<Response> {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.USER_ID_REQUIRED });
+            }
 
-        const client = await clientService.findClientByUserId(userId);
-        if (!client) {
-            return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.CLIENT_NOT_FOUND_FOR_USER });
+            const client = await clientService.findClientByUserId(userId);
+            if (!client || 'error' in client) {
+                return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.CLIENT_NOT_FOUND_FOR_USER });
+            }
+
+            const products = await productService.getProductsByClient(client.clientCode);
+            return res.status(HTTP_OK).json({ data: products });
+        } catch (error) {
+            return res.status(HTTP_BAD_REQUEST).json({ error: c.FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT });
         }
-        const products = await productService.getProductsByClient(client.id);
-        return res.status(HTTP_OK).json(products);
-    } catch (error) {
-        console.error('Error in getProductsByClient:', error);
-        return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT });
-    }
 }
 
     static async getProductById(req: Request, res: Response): Promise<void> {
@@ -171,4 +186,3 @@ class ProductsController {
         return res.status(HTTP_OK).json({ message: SUCCESS_MESSAGES.CLIENT_REMOVED_FROM_PRODUCT });
     }
 }
-export default ProductsController;
