@@ -33,6 +33,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "^1.4.13",
     "@types/node": "^22.15.20",
+    "@types/node-fetch": "^2.6.12",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "husky": "^9.1.7",
@@ -55,7 +56,8 @@
     "joi": "^17.13.3",
     "joi-to-swagger": "^6.2.0",
     "jsonwebtoken": "^9.0.2",
-     "multer": "^2.0.1",
+    "multer": "^2.0.1",
+    "node-fetch": "^2.7.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
     "zod-openapi": "^4.2.4"
