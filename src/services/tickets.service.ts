@@ -48,6 +48,7 @@ class TicketsService {
         title,
         status,
         priority,
+        description: ticketData.description || '',
         imageUrl,
         createdBy: userId,
         clientId,
