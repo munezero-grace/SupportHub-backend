@@ -30,5 +30,9 @@ export interface AuthPayload {
   email: string;
   role: string;
   provider?: string;
-  providerId?: string;
+  providerId?: string;  client?: {
+    id: string;
+    clientCode: string;
+    companyName: string | null;
+  };
 }

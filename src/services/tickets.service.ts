@@ -1,10 +1,24 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, StatusEnum, PriorityEnum } from '@prisma/client';
 import { ClientService } from './client.service';
+import { ERROR_MESSAGES } from '../constants/response/errors';
 
 const prisma = new PrismaClient();
 const clientService = new ClientService();
 
-class TicketsService {
+interface CreateTicketData {
+  title: string;
+  priority?: PriorityEnum;
+  imageUrl?: string;
+  clientId?: string;
+  productId?: string;
+  product?: string;
+  tags?: string;
+  dueDate?: string;
+  internalNotes?: string;
+  description?: string;
+}
+
+export class TicketsService {
   private static async getNextTicketCode(): Promise<string> {
     const lastTicket = await prisma.tickets.findFirst({
       orderBy: { ticketCode: 'desc' },
@@ -19,43 +33,114 @@ class TicketsService {
     return `T-${nextCodeNumber}`;
   }
 
-  static async createTicket(userId: string, ticketData: any) {
-    const { title, status, priority, imageUrl, clientId, productId } = ticketData;
+  static async createTicket(userId: string, ticketData: CreateTicketData) {
+    const { title, priority, imageUrl, clientId, productId, product, tags, dueDate, internalNotes, description } = ticketData;
 
-    if (clientId) {
+    const userClient = await clientService.findClientByUserId(userId);
+
+    let finalClientId = clientId;
+    if (!clientId && userClient && 'id' in userClient) {
+      finalClientId = userClient.id;
+    } else if (clientId) {
       const clientExists = await clientService.findClientByIdField(clientId);
       if (!clientExists) {
-        throw new Error(`Client with id ${clientId} does not exist`);
+        return { error: ERROR_MESSAGES.CLIENT_DOES_NOT_EXIST.replace('{id}', clientId) };
       }
+    } else if (!userClient) {
+      return { error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER };
     }
 
-    if (productId) {
+    const finalProductId = productId || product;
+
+    if (finalProductId) {
       const productExists = await prisma.products.findUnique({
-        where: { id: productId },
+        where: { id: finalProductId }
       });
+
       if (!productExists) {
-        throw new Error(`Product with id ${productId} does not exist`);
+        return { error: ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST };
       }
-    } else {
-      throw new Error('productId is required');
+
+      if (finalClientId) {
+        const clientProduct = await prisma.clientProduct.findUnique({
+          where: {
+            clientId_productId: {
+              clientId: finalClientId,
+              productId: finalProductId
+            }
+          }
+        });
+
+        if (!clientProduct) {
+          return { error: ERROR_MESSAGES.PRODUCT_NOT_ASSOCIATED_WITH_CLIENT };
+        }
+      }
     }
 
-    const ticketCode = await this.getNextTicketCode();
+    const ticketCode = await TicketsService.getNextTicketCode();
 
     const ticket = await prisma.tickets.create({
       data: {
         ticketCode,
         title,
-        status,
-        priority,
-        description: ticketData.description || '',
+        status: StatusEnum.new,
+        priority: priority || PriorityEnum.medium,
         imageUrl,
-        createdBy: userId,
-        clientId,
-        productId,
-      },
+        description,
+        internalNotes,
+        ...(tags ? { tags: typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags } : {}),
+        ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
+        owner: {
+          connect: { id: userId }
+        },
+        ...(finalClientId && {
+          client: {
+            connect: { id: finalClientId }
+          }
+        }),
+        ...(finalProductId && {
+          product: {
+            connect: { id: finalProductId }
+          }
+        }),
+        ...(description && { description }),
+        ...(internalNotes && { internalNotes }),
+        ...(tags && { tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) }),
+        ...(dueDate && { dueDate: new Date(dueDate) })
+      }
     });
-    return ticket;
+
+    const completeTicket = await prisma.tickets.findUnique({
+      where: { id: ticket.id },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        client: {
+          select: {
+            id: true,
+            clientCode: true,
+            companyName: true,
+            status: true
+          }
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    return completeTicket;
   }
 
   static async checkUserExists(userId: string) {
@@ -65,34 +150,64 @@ class TicketsService {
     return !!user;
   }
 
-  static async getUserTickets(userId: string) {
+  static async getUserTickets(userId: string, isAdmin: boolean = false) {
     try {
       return await prisma.tickets.findMany({
-        where: { createdBy: userId },
-        orderBy: { createdAt: 'desc' },
+        where: isAdmin ? {} : {
+          OR: [
+            { createdBy: userId },
+            {
+              client: {
+                userId: userId
+              }
+            }
+          ]
+        },
+        orderBy: [
+          { createdAt: 'desc' }
+        ],
         include: {
           client: {
             select: {
+              id: true,
               companyName: true,
-            },
+              clientCode: true,
+              status: true
+            }
           },
           product: {
             select: {
+              id: true,
               name: true,
-            },
+              productCode: true,
+              status: true,
+              updatedAt: true
+            }
           },
-        },
+          owner: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          }
+        }
       });
     } catch (error) {
-      console.error('Error fetching user tickets:', error);
       throw error;
     }
+  }
+
+  static async getUserTicketsWithOptions(queryOptions: any) {
+    return await prisma.tickets.findMany(queryOptions);
   }
 
   static async getTicketById(id: string) {
     return await prisma.tickets.findUnique({
       where: { id },
       include: {
+        owner: true,
         client: {
           select: {
             companyName: true,
@@ -108,14 +223,6 @@ class TicketsService {
   }
 
   static async updateTicket(id: string, updateData: any) {
-    if (updateData.productId) {
-      const productExists = await prisma.products.findUnique({
-        where: { id: updateData.productId },
-      });
-      if (!productExists) {
-        throw new Error(`Product with id ${updateData.productId} does not exist`);
-      }
-    }
     return await prisma.tickets.update({
       where: { id },
       data: updateData,
@@ -128,5 +235,3 @@ class TicketsService {
     });
   }
 }
-
-export default TicketsService;

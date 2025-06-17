@@ -32,7 +32,28 @@ export const ERROR_MESSAGES = {
   CLIENT_NOT_FOUND_FOR_USER: "Client not found for user.",
   FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT: "Failed to retrieve products for client.",
   FAILED_TO_RETRIEVE_PRODUCTS: "Failed to retrieve products.",
-  SLACK_NOTIFICATION_FAILED: "Slack notification failed."
+  SLACK_NOTIFICATION_FAILED: "Slack notification failed.",
+  CLIENT_DOES_NOT_EXIST: "Client with id {id} does not exist",
+  PRODUCT_DOES_NOT_EXIST: "Product does not exist",
+  PRODUCT_NOT_ASSOCIATED_WITH_CLIENT: "Product is not associated with this client",
+  NO_CLIENT_ASSOCIATED_WITH_USER: "No client associated with this user",
+  USER_DOES_NOT_EXIST: "User does not exist",
+  UNAUTHORIZED: "Unauthorized",
+  FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE: "Failed to retrieve products from database",
+  FAILED_TO_ADD_CLIENT_TO_PRODUCT: "Failed to add client to product",
+  FAILED_TO_CREATE_CLIENT: "Failed to create client",
+  FAILED_TO_FETCH_CLIENTS: "Failed to fetch clients",
+  FAILED_TO_FETCH_CLIENT: "Failed to fetch client",
+  CLIENT_NOT_FOUND_UPDATE: "Client not found",
+  FAILED_TO_GET_PRODUCTS_FOR_CLIENT: "Failed to get products for client",
+  TICKET_NOT_FOUND: "Ticket not found",
+  FAILED_TO_RETRIEVE_TICKETS: "Failed to retrieve tickets",
+  FAILED_TO_RETRIEVE_TICKET: "Failed to retrieve ticket",
+  FAILED_TO_UPDATE_TICKET: "Failed to update ticket",
+  FAILED_TO_DELETE_TICKET: "Failed to delete ticket",
+  CLIENT_CODE_IS_REQUIRED: "Client code is required",
+  CLIENT_PRODUCT_RELATION_NOT_FOUND: "Client is not linked to this product",
+  PRODUCT_REMOVE_CLIENT_FAILED: "Failed to remove client from product"
 };
 
 export const RESPONSE_STATUS = {

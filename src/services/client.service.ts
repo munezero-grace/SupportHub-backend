@@ -8,14 +8,14 @@ import { ERROR_MESSAGES } from "../constants/response/errors";
 const prisma = new PrismaClient();
 
 export class ClientService {
-  async createClient(data: CreateClientDto): Promise<Clients> {
+  async createClient(data: CreateClientDto): Promise<Clients | { error: string }> {
     try {
       const existingUser = await prisma.users.findUnique({
         where: { email: data.contactEmail },
       });
 
       if (existingUser) {
-        throw new Error(ERROR_MESSAGES.USER_EMAIL_EXISTS);
+        return { error: ERROR_MESSAGES.USER_EMAIL_EXISTS };
       }
 
       const clientCode = await generateClientCode(prisma);
@@ -67,11 +67,10 @@ export class ClientService {
         return createdCompany;
       });
     } catch (error) {
-      console.error("Error in createClient:", error);
       if (error instanceof Error) {
-        throw new Error(error.message);
+        return { error: error.message };
       }
-      throw new Error("Failed to create client");
+      return { error: ERROR_MESSAGES.FAILED_TO_CREATE_CLIENT };
     }
   }
 
@@ -104,9 +103,14 @@ export class ClientService {
     });
   }
 
-  async findAllClients(): Promise<Clients[]> {
+  async findAllClients(activeOnly: boolean = false): Promise<Clients[] | { error: string }> {
     try {
       return prisma.clients.findMany({
+        where: activeOnly
+          ? {
+            status: "active",
+          }
+          : undefined,
         orderBy: { createdAt: "desc" },
         include: {
           user: {
@@ -124,12 +128,11 @@ export class ClientService {
         },
       });
     } catch (error) {
-      console.error("Error finding all clients:", error);
-      throw new Error("Failed to fetch clients");
+      return { error: ERROR_MESSAGES.FAILED_TO_FETCH_CLIENTS };
     }
   }
 
-  async findClientById(clientCode: string): Promise<Clients | null> {
+  async findClientById(clientCode: string): Promise<Clients | null | { error: string }> {
     try {
       return prisma.clients.findUnique({
         where: { clientCode },
@@ -157,12 +160,11 @@ export class ClientService {
         },
       });
     } catch (error) {
-      console.error("Error finding client by id:", error);
-      throw new Error("Failed to fetch client");
+      return { error: ERROR_MESSAGES.FAILED_TO_FETCH_CLIENT };
     }
   }
 
-  async findClientByUserId(userId: string): Promise<Clients | null> {
+  async findClientByUserId(userId: string): Promise<Clients | null | { error: string }> {
     return prisma.clients.findFirst({
       where: { userId },
       include: {
@@ -176,18 +178,19 @@ export class ClientService {
       },
     });
   }
-
+  
   async updateClient(
     clientCode: string,
     data: Partial<Clients>
-  ): Promise<Clients> {
+  ): Promise<Clients | { error: string }> {
     const existingClient = await prisma.clients.findUnique({
       where: { clientCode },
-    });
-
+    }); 
+    
     if (!existingClient) {
-      throw new Error("Client not found");
+      return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND_UPDATE };
     }
+    
     const allowedFields: (keyof Clients)[] = [
       "companyName",
       "supportTier",
@@ -199,6 +202,7 @@ export class ClientService {
         filteredData[key] = data[key];
       }
     }
+    
     return await prisma.clients.update({
       where: { clientCode },
       data: filteredData,
@@ -233,7 +237,7 @@ export class ClientService {
     });
   }
 
-  async deleteClient(clientCode: string): Promise<Clients> {
+  async deleteClient(clientCode: string): Promise<Clients | { error: string }> {
     return prisma.$transaction(async (tx) => {
       const client = await tx.clients.findUnique({
         where: { clientCode },
@@ -241,14 +245,16 @@ export class ClientService {
           user: true,
           clientProducts: true,
         },
-      });
-
+      }); 
+      
       if (!client) {
-        throw new Error("Client not found");
+        return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND };
       }
+      
       await tx.clientProduct.deleteMany({
         where: { clientId: client.id },
       });
+      
       const deletedClient = await tx.clients.delete({
         where: { clientCode },
       });
@@ -256,14 +262,46 @@ export class ClientService {
       return deletedClient;
     });
   }
+  
+  async getProductsForClient(clientCode: string) {
+    try {
+      const client = await prisma.clients.findUnique({
+        where: { clientCode },
+        include: {
+          clientProducts: {
+            include: {
+              product: {
+                include: {
+                  clientProducts: {
+                    include: {
+                      client: {
+                        select: {
+                          clientCode: true,
+                          companyName: true,
+                          status: true,
+                          supportTier: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }); 
 
-  async getProductsForClient(clientId: string) {
-    return prisma.clientProduct.findMany({
-      where: { clientId },
-      include: {
-        product: true,
-      },
-    });
+      if (!client) {
+        return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND };
+      }
+
+      return client.clientProducts.map((cp) => ({
+        ...cp.product,
+        clients: cp.product.clientProducts.map((ccp) => ccp.client),
+      }));
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : ERROR_MESSAGES.FAILED_TO_GET_PRODUCTS_FOR_CLIENT };
+    }
   }
 
   async addProductToClient(clientId: string, productId: string) {
@@ -282,6 +320,16 @@ export class ClientService {
           clientId,
           productId,
         },
+      },
+    });
+  }
+
+  async findByClientCode(clientCode: string): Promise<Clients | null> {
+    return prisma.clients.findUnique({
+      where: { clientCode },
+      include: {
+        user: true,
+        clientProducts: true,
       },
     });
   }
