@@ -65,7 +65,38 @@ export class UserService {
     return user;
   }
 
-    async findClientByUUID(clientId: string) {
+  async getAllUsersWithRoles() {
+    const users = await prisma.users.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        userRoles: {
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    
+    const usersWithRoles = users.map(user => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      roles: user.userRoles.map(ur => ur.role.name),
+    }));
+
+    return usersWithRoles;
+  }
+
+  async findClientByUUID(clientId: string) {
     const client = await prisma.clients.findUnique({
       where: { id: clientId },
     });
@@ -103,6 +134,86 @@ export class UserService {
         status: HTTP_BAD_REQUEST,
         message:
           error instanceof Error ? error.message : ERROR_MESSAGES.USER_DELETE_FAILED,
+      };
+    }
+  }
+
+  async updateUserSettings(userId: string, companyName: string, companyDomain?: string, firstName?: string, lastName?: string) {
+    try {
+      const client = await prisma.clients.findFirst({
+        where: { userId: userId },
+      });
+
+      if (!client) {
+        throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+
+      const updatedClient = await prisma.clients.update({
+        where: { id: client.id },
+        data: {
+          companyName,
+          ...(companyDomain ? { companyDomain } : {}),
+        },
+      });
+
+      if (firstName !== undefined || lastName !== undefined) {
+        await prisma.users.update({
+          where: { id: userId },
+          data: {
+            ...(firstName !== undefined ? { firstName } : {}),
+            ...(lastName !== undefined ? { lastName } : {}),
+          },
+        });
+      }
+
+      return updatedClient;
+    } catch (error) {
+      throw {
+        status: HTTP_BAD_REQUEST,
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.USER_DELETE_FAILED,
+      };
+    }
+  }
+
+  async getUserSettings(userId: string) {
+    try {
+      
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        include: { userRoles: { include: { role: true } } },
+      });
+
+      const isSuperAdmin = user?.userRoles.some(ur => ur.role.name === 'super_admin');
+
+      if (isSuperAdmin) {
+        return {
+          companyName: null,
+          companyDomain: null,
+          clientCode: null,
+          firstName: null,
+          lastName: null,
+        };
+      }
+
+      const client = await prisma.clients.findFirst({
+        where: { userId: userId },
+      });
+
+      if (!client) {
+        throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+
+      return {
+        companyName: client.companyName,
+        companyDomain: client.companyDomain,
+        clientCode: client.clientCode,
+        firstName: user?.firstName || null,
+        lastName: user?.lastName || null,
+      };
+    } catch (error) {
+      throw {
+        status: HTTP_BAD_REQUEST,
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.USER_NOT_FOUND,
       };
     }
   }

@@ -80,6 +80,7 @@ model Clients {
   id             String          @id @default(uuid())
   clientCode     String          @unique
   companyName    String?
+  companyDomain  String?
   supportTier    SupportTier     @default(standard)
   status         ClientStatus    @default(inactive)
   createdBy      String          @default(uuid())
@@ -142,7 +143,21 @@ model Tickets {
   client    Clients?  @relation(fields: [clientId], references: [id])
   product   Products? @relation(fields: [productId], references: [id])
 
+  TicketAttachments TicketAttachment[]
+
   @@map("Tickets")
+}
+
+model TicketAttachment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("TicketAttachments")
 }
 
 model UserTickets {

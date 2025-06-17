@@ -10,7 +10,6 @@ export const SUCCESS_MESSAGES = {
   CLIENT_ADDED_TO_PRODUCT: "Client added to product successfully.",
   CLIENT_REMOVED_FROM_PRODUCT: "Client removed from product successfully.",
   USER_DELETED: "User deleted successfully",
-
   TICKET_CREATED: "Ticket created successfully.",
   TICKET_UPDATED: "Ticket updated successfully.",
   TICKET_DELETED: "Ticket deleted successfully.",
@@ -20,4 +19,8 @@ export const SUCCESS_MESSAGES = {
   CLIENTS_RETRIEVED: "Clients retrieved successfully.",
   CLIENT_SOFT_DELETED: "Client has been successfully deactivated",
   CLIENT_RESTORED: "Client has been successfully restored",
+  USERS_RETRIEVED_SUCCESSFULLY: "Users retrieved successfully",
+  USER_SETTINGS_UPDATED_SUCCESSFULLY: "User settings updated successfully",
+  USER_SETTINGS_RETRIEVED_SUCCESSFULLY: "User settings retrieved successfully",
 };
+

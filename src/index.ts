@@ -10,7 +10,8 @@ import { HTTP_OK } from "./constants/httpStatusCodes";
 import productRoutes from "./routes/productRoutes";
 import { setupSwagger } from "./documentations/swagger-docs";
 import ticketsRoutes from "./routes/ticketsRoutes";
-
+import userRoutes from "./routes/userRoutes";
+import { authenticateUser } from "./middlewares/authenticateUser";
 dotenv.config();
 
 const app = express();
@@ -43,6 +44,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/tickets", ticketsRoutes);
+
+app.use("/api", authenticateUser, userRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({

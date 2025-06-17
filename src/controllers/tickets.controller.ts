@@ -14,7 +14,7 @@ import {
   HTTP_ACCESS_DENIED,
 } from '../constants/httpStatusCodes';
 import { sendSlackNotification } from '../utils/slackNotifier';
-import { prisma } from '../lib/prisma';
+import  prisma  from '../lib/prisma';
 import { getUserRole } from '../helpers/getUserRole';
 
 const clientService = new ClientService();
@@ -45,19 +45,26 @@ class TicketsController {
         }
       }
 
-      let imageUrl;
-      if (req.file) {
+      let imageUrls: string[] = [];
+      if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files) {
+          const result = await cloudinary.uploader.upload((file as Express.Multer.File).path, {
+            folder: 'tickets',
+          });
+          imageUrls.push(result.secure_url);
+        }
+      } else if (req.file) {
         const result = await cloudinary.uploader.upload(req.file.path, {
           folder: 'tickets',
         });
-        imageUrl = result.secure_url;
+        imageUrls.push(result.secure_url);
       }
 
       let ticketData;
       if (isAdmin) {
         ticketData = {
           ...req.body,
-          imageUrl,
+          imageUrls,
         };
       } else {
         const client = await clientService.findClientByUserId(userId);
@@ -66,7 +73,7 @@ class TicketsController {
         }
         ticketData = {
           ...req.body,
-          imageUrl,
+          imageUrls,
           clientId: client.id,
         };
       }
@@ -87,16 +94,17 @@ class TicketsController {
       }) : null;
 
       const slackMessage = [
-        `New ticket created:\n${ticketResult.title} (Code: ${ticketResult.ticketCode})`,
-        `Product Name: ${product?.name || 'Unknown'}`,
-        `Product Code: ${product?.productCode || 'Unknown'}`,
+        `*New ticket created:*\n${ticketResult.title}(${ticketResult.ticketCode})`,
+        `${product?.name || 'Unknown'}(${product?.productCode || 'Unknown'})`,
         'description' in ticketResult ? `Description: ${ticketResult.description}` : null,
-        ticketResult.imageUrl ? ticketResult.imageUrl : null,
+        ...(ticketResult.TicketAttachments?.map((attachment: any) => attachment.fileUrl) || []),
         `Created by: ${userName}`
       ].filter(Boolean).join('\n');
 
       try {
+       
         await sendSlackNotification(slackMessage);
+       
       } catch (err) {
         console.error('Failed to send Slack notification:', err);
       }
@@ -106,6 +114,8 @@ class TicketsController {
         data: ticketResult
       });
     } catch (error: any) {
+      console.error('Error in createTicket:', error);
+      console.error('Request body:', req.body);
       return res.status(HTTP_BAD_REQUEST).json({
         error: error.message || ERROR_MESSAGES.GENERAL_ERROR
       });
@@ -136,27 +146,7 @@ class TicketsController {
               id: true,
               companyName: true,
               clientCode: true,
-              status: true,
-              clientProducts: {
-                include: {
-                  product: {
-                    select: {
-                      id: true,
-                      name: true,
-                      productCode: true,
-                      status: true
-                    }
-                  }
-                }
-              }
-            },
-          },
-          product: {
-            select: {
-              id: true,
-              name: true,
-              productCode: true,
-              status: true,
+              status: true
             },
           },
           owner: {
