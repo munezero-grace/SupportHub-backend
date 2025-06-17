@@ -16,7 +16,7 @@ export class UserService {
         `;
 
         if (!user || !Array.isArray(user) || user.length === 0) {
-          throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+          return { Error: (ERROR_MESSAGES.USER_NOT_FOUND) };
         }
 
         const clients = await tx.$queryRaw`
@@ -26,7 +26,7 @@ export class UserService {
         `;
 
         if (Array.isArray(clients) && clients.length > 0) {
-          throw new Error(ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS);
+          return { Error: (ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS) };
         }
 
         await tx.$executeRaw`
@@ -38,6 +38,8 @@ export class UserService {
           DELETE FROM "Users"
           WHERE id = ${userId}
         `;
+
+        return { success: true };
       });
 
       return { success: true, message: SUCCESS_MESSAGES.USER_DELETED };
@@ -81,16 +83,18 @@ export class UserService {
         });
 
         if (!user) {
-          throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+          return { Error: (ERROR_MESSAGES.USER_NOT_FOUND) };
         }
 
         if (user.Clients.length > 0) {
-          throw new Error(ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS);
+          return { Error: (ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS) };
         }
 
         await tx.users.delete({
           where: { id: userId },
         });
+
+        return { success: true };
       });
 
       return { success: true, message: SUCCESS_MESSAGES.USER_DELETED };

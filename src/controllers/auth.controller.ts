@@ -47,7 +47,17 @@ class AuthController {
 
     const findUser = await prisma.users.findUnique({
       where: { email },
-      select: { ...userSelectFields, password: true },
+      select: {
+        ...userSelectFields,
+        password: true,
+        Clients: {
+          select: {
+            id: true,
+            clientCode: true,
+            companyName: true,
+          }
+        }
+      },
     });
     if (!findUser || !findUser.password) {
       res
@@ -68,8 +78,7 @@ class AuthController {
 
     const role = userRole
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
-      : null;
-
+      : null; const client = findUser.Clients?.[0];
     const token = generateToken({
       id: findUser.id,
       firstName: findUser.firstName,
@@ -78,6 +87,11 @@ class AuthController {
       role: role?.name as UserRole,
       provider: "credentials",
       providerId: "seeded-superadmin",
+      client: client ? {
+        id: client.id,
+        clientCode: client.clientCode,
+        companyName: client.companyName
+      } : undefined
     });
 
     const responsePayload = {
@@ -90,27 +104,22 @@ class AuthController {
   public googleSignIn = async (req: Request, res: Response) => {
     const { email, firstName, lastName, provider, providerId } = req.body;
     let user = await prisma.users.findUnique({
-      where: { email },
+      where: {
+        email,
+        providerId
+      },
       select: {
         ...userSelectFields,
-        Clients: true
+        Clients: {
+          select: {
+            id: true,
+            clientCode: true,
+            companyName: true
+          }
+        }
       },
     });
-    if (user) {
-      user = await prisma.users.update({
-        where: { email },
-        data: {
-          firstName,
-          lastName,
-          provider,
-          providerId
-        },
-        select: {
-          ...userSelectFields,
-          Clients: true
-        },
-      });
-    } else {
+    if (!user) {
       user = await prisma.$transaction(async (tx) => {
         const newUser = await tx.users.create({
           data: {
@@ -122,7 +131,13 @@ class AuthController {
           },
           select: {
             ...userSelectFields,
-            Clients: true
+            Clients: {
+              select: {
+                id: true,
+                clientCode: true,
+                companyName: true
+              }
+            }
           },
         });
         let clientRole = await tx.roles.findUnique({
@@ -147,7 +162,7 @@ class AuthController {
           await tx.clients.create({
             data: {
               clientCode,
-              companyName: '',
+              companyName: `${firstName} ${lastName}`.trim(),
               supportTier: "standard",
               status: "active",
               createdBy: newUser.id,
@@ -166,13 +181,32 @@ class AuthController {
 
     const role = userRole
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
-      : null; const token = generateToken({
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: role?.name as UserRole
-      });
+      : null;
+
+    // Get the latest client information
+    const client = await prisma.clients.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        clientCode: true,
+        companyName: true
+      }
+    });
+
+    const token = generateToken({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: role?.name as UserRole,
+      provider: provider,
+      providerId: providerId,
+      client: client ? {
+        id: client.id,
+        clientCode: client.clientCode,
+        companyName: client.companyName
+      } : undefined
+    });
 
     return res.status(HTTP_OK).json({
       token,

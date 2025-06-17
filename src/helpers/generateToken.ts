@@ -14,6 +14,7 @@ export const generateToken = (user: AuthPayload): string => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      client: user.client,
     },
     JWT_SECRET,
     { expiresIn: "1d" }

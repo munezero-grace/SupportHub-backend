@@ -19,12 +19,12 @@ export function requireRole(roleName: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = req.user as { id: string; role?: string } | undefined;
-      
+
       if (!user || !user.id) {
-        return res.status(HTTP_UNAUTHORIZED).json({ 
+        return res.status(HTTP_UNAUTHORIZED).json({
           status: "error",
           message: "No user found in request",
-          code: "NO_USER" 
+          code: "NO_USER"
         });
       }
       if (user.role && user.role === roleName) {
@@ -46,15 +46,14 @@ export function requireRole(roleName: string) {
       if (userRole.role.name !== roleName) {
         return res
           .status(HTTP_ACCESS_DENIED)
-          .json({ 
-            message: `Forbidden: Requires ${roleName} role. Current role: ${userRole.role.name}` 
+          .json({
+            message: `Forbidden: Requires ${roleName} role. Current role: ${userRole.role.name}`
           });
       }
       req.user!.role = userRole.role.name;
-      
+
       next();
     } catch (error) {
-      console.error('Role check error:', error);
       return res
         .status(HTTP_ACCESS_DENIED)
         .json({ message: "Error checking user permissions" });
