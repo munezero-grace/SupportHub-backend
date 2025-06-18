@@ -10,6 +10,12 @@ CREATE TYPE "SupportTier" AS ENUM ('premium', 'standard');
 -- CreateEnum
 CREATE TYPE "ClientStatus" AS ENUM ('active', 'inactive');
 
+-- CreateEnum
+CREATE TYPE "StatusEnum" AS ENUM ('in_progress', 'new', 'assigned', 'awaiting_client', 'resolved');
+
+-- CreateEnum
+CREATE TYPE "PriorityEnum" AS ENUM ('medium', 'low', 'high', 'critical');
+
 -- CreateTable
 CREATE TABLE "Users" (
     "id" TEXT NOT NULL,
@@ -60,9 +66,9 @@ CREATE TABLE "Products" (
 CREATE TABLE "Clients" (
     "id" TEXT NOT NULL,
     "clientCode" TEXT NOT NULL,
-    "companyName" TEXT NOT NULL,
+    "companyName" TEXT,
     "supportTier" "SupportTier" NOT NULL DEFAULT 'standard',
-    "status" "ClientStatus" NOT NULL DEFAULT 'active',
+    "status" "ClientStatus" NOT NULL DEFAULT 'inactive',
     "createdBy" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -78,6 +84,39 @@ CREATE TABLE "ClientProduct" (
     "productId" TEXT NOT NULL,
 
     CONSTRAINT "ClientProduct_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Tickets" (
+    "id" TEXT NOT NULL,
+    "ticketCode" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "status" "StatusEnum" NOT NULL DEFAULT 'in_progress',
+    "priority" "PriorityEnum" NOT NULL DEFAULT 'medium',
+    "description" TEXT,
+    "createdBy" TEXT,
+    "imageUrl" TEXT,
+    "internalNotes" TEXT,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "dueDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "clientId" TEXT,
+    "productId" TEXT,
+
+    CONSTRAINT "Tickets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserTickets" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "ticketId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "clientId" TEXT,
+
+    CONSTRAINT "UserTickets_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -98,6 +137,12 @@ CREATE UNIQUE INDEX "Clients_clientCode_key" ON "Clients"("clientCode");
 -- CreateIndex
 CREATE UNIQUE INDEX "ClientProduct_clientId_productId_key" ON "ClientProduct"("clientId", "productId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "Tickets_ticketCode_key" ON "Tickets"("ticketCode");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserTickets_userId_ticketId_key" ON "UserTickets"("userId", "ticketId");
+
 -- AddForeignKey
 ALTER TABLE "UserRoles" ADD CONSTRAINT "UserRoles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -112,3 +157,18 @@ ALTER TABLE "ClientProduct" ADD CONSTRAINT "ClientProduct_clientId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "ClientProduct" ADD CONSTRAINT "ClientProduct_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Clients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserTickets" ADD CONSTRAINT "UserTickets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserTickets" ADD CONSTRAINT "UserTickets_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "Tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
