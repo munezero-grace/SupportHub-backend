@@ -22,14 +22,46 @@ router
     WrapAsync(clientController.createClient)
   );
 
-router.get("/users/:userId", WrapAsync(authenticateUser), WrapAsync(clientController.getClientByUserId));
-router.get("/:clientCode/products", WrapAsync(authenticateUser), WrapAsync(clientController.getProductsForClient));
+router.delete(
+  "/:clientId/soft-delete",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(clientController.softDeleteClient)
+);
 
-router.route("/:clientCode/products/:productId")
-  .post(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.addProductToClient))
-  .delete(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.removeProductFromClient));
+router.post(
+  "/:clientId/restore",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(clientController.restoreClient)
+);
 
-router.route("/:clientCode")
+router.get(
+  "/users/:userId",
+  WrapAsync(authenticateUser),
+  WrapAsync(clientController.getClientByUserId)
+);
+router.get(
+  "/:clientId/products",
+  WrapAsync(authenticateUser),
+  WrapAsync(clientController.getProductsForClient)
+);
+
+router
+  .route("/:clientId/products/:productId")
+  .post(
+    WrapAsync(authenticateUser),
+    WrapAsync(requireRole("super_admin")),
+    WrapAsync(clientController.addProductToClient)
+  )
+  .delete(
+    WrapAsync(authenticateUser),
+    WrapAsync(requireRole("super_admin")),
+    WrapAsync(clientController.removeProductFromClient)
+  );
+
+router
+  .route("/:clientId")
   .get(WrapAsync(authenticateUser), WrapAsync(clientController.getClientById))
   .patch(
     WrapAsync(authenticateUser),
@@ -37,7 +69,11 @@ router.route("/:clientCode")
     validateRequest(updateClientSchema),
     WrapAsync(clientController.updateClient)
   )
-  .delete(WrapAsync(authenticateUser), WrapAsync(requireRole("super_admin")), WrapAsync(clientController.deleteClient));
+  .delete(
+    WrapAsync(authenticateUser),
+    WrapAsync(requireRole("super_admin")),
+    WrapAsync(clientController.deleteClient)
+  );
 
 router.patch(
   "/:clientId/status",
