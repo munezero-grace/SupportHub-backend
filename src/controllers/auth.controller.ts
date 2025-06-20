@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import prisma from "../lib/prisma";
 import { generateToken } from "../helpers/generateToken";
 import { generateClientCode } from "../helpers/generateClientCode";
 import { ERROR_MESSAGES } from "../constants/response/errors";
@@ -14,7 +14,7 @@ import {
   HTTP_OK,
 } from "../constants/httpStatusCodes";
 import { userSelectFields } from "../utils/userSelects";
-const prisma = new PrismaClient();
+
 class AuthController {
   public signup = async (req: Request, res: Response) => {
     const { firstName, lastName, email, password } = req.body;
@@ -41,7 +41,6 @@ class AuthController {
       message: SUCCESS_MESSAGES.USER_REGISTERED,
     });
   };
-
   public login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
@@ -55,8 +54,9 @@ class AuthController {
             id: true,
             clientCode: true,
             companyName: true,
-          }
-        }
+            deletedAt: true,
+          },
+        },
       },
     });
     if (!findUser || !findUser.password) {
@@ -72,13 +72,23 @@ class AuthController {
         .json({ message: ERROR_MESSAGES.INVALID_CREDENTIALS });
       return;
     }
+
+    const client = findUser.Clients?.[0];
+    if (client?.deletedAt) {
+      res
+        .status(HTTP_BAD_REQUEST)
+        .json({ message: ERROR_MESSAGES.ACCOUNT_DEACTIVATED });
+      return;
+    }
+
     const userRole = await prisma.userRoles.findFirst({
       where: { userId: findUser.id },
     });
 
     const role = userRole
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
-      : null; const client = findUser.Clients?.[0];
+      : null;
+
     const token = generateToken({
       id: findUser.id,
       firstName: findUser.firstName,
@@ -87,11 +97,14 @@ class AuthController {
       role: role?.name as UserRole,
       provider: "credentials",
       providerId: "seeded-superadmin",
-      client: client ? {
-        id: client.id,
-        clientCode: client.clientCode,
-        companyName: client.companyName
-      } : undefined
+      client:
+        client && !client.deletedAt
+          ? {
+              id: client.id,
+              clientCode: client.clientCode,
+              companyName: client.companyName,
+            }
+          : undefined,
     });
 
     const responsePayload = {
@@ -106,7 +119,7 @@ class AuthController {
     let user = await prisma.users.findUnique({
       where: {
         email,
-        providerId
+        providerId,
       },
       select: {
         ...userSelectFields,
@@ -114,11 +127,13 @@ class AuthController {
           select: {
             id: true,
             clientCode: true,
-            companyName: true
-          }
-        }
+            companyName: true,
+            deletedAt: true,
+          },
+        },
       },
     });
+
     if (!user) {
       user = await prisma.$transaction(async (tx) => {
         const newUser = await tx.users.create({
@@ -127,7 +142,7 @@ class AuthController {
             firstName,
             lastName,
             provider,
-            providerId
+            providerId,
           },
           select: {
             ...userSelectFields,
@@ -135,9 +150,10 @@ class AuthController {
               select: {
                 id: true,
                 clientCode: true,
-                companyName: true
-              }
-            }
+                companyName: true,
+                deletedAt: true,
+              },
+            },
           },
         });
         let clientRole = await tx.roles.findUnique({
@@ -175,6 +191,14 @@ class AuthController {
       });
     }
 
+    const client = user.Clients?.[0];
+    if (client?.deletedAt) {
+      res
+        .status(HTTP_BAD_REQUEST)
+        .json({ message: ERROR_MESSAGES.ACCOUNT_DEACTIVATED });
+      return;
+    }
+
     const userRole = await prisma.userRoles.findFirst({
       where: { userId: user.id },
     });
@@ -183,32 +207,25 @@ class AuthController {
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
       : null;
 
-    // Get the latest client information
-    const client = await prisma.clients.findFirst({
-      where: { userId: user.id },
-      select: {
-        id: true,
-        clientCode: true,
-        companyName: true
-      }
-    });
-
     const token = generateToken({
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       role: role?.name as UserRole,
-      provider: provider,
-      providerId: providerId,
-      client: client ? {
-        id: client.id,
-        clientCode: client.clientCode,
-        companyName: client.companyName
-      } : undefined
+      provider: provider || undefined,
+      providerId: providerId || undefined,
+      client:
+        client && !client.deletedAt
+          ? {
+              id: client.id,
+              clientCode: client.clientCode,
+              companyName: client.companyName,
+            }
+          : undefined,
     });
 
-    return res.status(HTTP_OK).json({
+    res.status(HTTP_OK).json({
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     });

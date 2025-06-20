@@ -71,6 +71,7 @@ CREATE TABLE "Clients" (
     "status" "ClientStatus" NOT NULL DEFAULT 'inactive',
     "createdBy" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "deletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

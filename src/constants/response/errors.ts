@@ -1,6 +1,8 @@
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid credentials.",
   USER_ALREADY_EXISTS: "User already exists.",
+  ACCOUNT_DEACTIVATED:
+    "Your account has been deactivated. Please contact support.",
   ROLE_NOT_FOUND: "Role not found",
   ASSIGN_ROLE_ERROR: "Error assigning role.",
   SIGNUP_FAILED: "Signup failed.",
@@ -21,6 +23,7 @@ export const ERROR_MESSAGES = {
   TOKEN_EXPIRED: "Token has expired",
   INVALID_TOKEN: "Invalid token",
   NO_TOKEN: "No token provided",
+  FAILED_TO_RESTORE_CLIENT: "Failed to restore client",
   GENERAL_ERROR: "An error occurred. Please try again later.",
   INVALID_PRODUCT_DATA: "Invalid product data returned from service",
   PRODUCT_RETRIEVE_ALL_FAILED: "Failed to retrieve products",
@@ -30,16 +33,19 @@ export const ERROR_MESSAGES = {
   UNEXPECTED_ERROR: "An unexpected error occurred.",
   USER_ID_REQUIRED: "User ID is required.",
   CLIENT_NOT_FOUND_FOR_USER: "Client not found for user.",
-  FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT: "Failed to retrieve products for client.",
+  FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT:
+    "Failed to retrieve products for client.",
   FAILED_TO_RETRIEVE_PRODUCTS: "Failed to retrieve products.",
   SLACK_NOTIFICATION_FAILED: "Slack notification failed.",
   CLIENT_DOES_NOT_EXIST: "Client with id {id} does not exist",
   PRODUCT_DOES_NOT_EXIST: "Product does not exist",
-  PRODUCT_NOT_ASSOCIATED_WITH_CLIENT: "Product is not associated with this client",
+  PRODUCT_NOT_ASSOCIATED_WITH_CLIENT:
+    "Product is not associated with this client",
   NO_CLIENT_ASSOCIATED_WITH_USER: "No client associated with this user",
   USER_DOES_NOT_EXIST: "User does not exist",
   UNAUTHORIZED: "Unauthorized",
-  FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE: "Failed to retrieve products from database",
+  FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE:
+    "Failed to retrieve products from database",
   FAILED_TO_ADD_CLIENT_TO_PRODUCT: "Failed to add client to product",
   FAILED_TO_CREATE_CLIENT: "Failed to create client",
   FAILED_TO_FETCH_CLIENTS: "Failed to fetch clients",
@@ -53,7 +59,9 @@ export const ERROR_MESSAGES = {
   FAILED_TO_DELETE_TICKET: "Failed to delete ticket",
   CLIENT_CODE_IS_REQUIRED: "Client code is required",
   CLIENT_PRODUCT_RELATION_NOT_FOUND: "Client is not linked to this product",
-  PRODUCT_REMOVE_CLIENT_FAILED: "Failed to remove client from product"
+  PRODUCT_REMOVE_CLIENT_FAILED: "Failed to remove client from product",
+  FAILED_TO_DELETE_CLIENT: "Failed to soft delete client",
+  CLIENT_SOFT_DELETED: "Client is soft deleted and cannot be modified",
 };
 
 export const RESPONSE_STATUS = {
