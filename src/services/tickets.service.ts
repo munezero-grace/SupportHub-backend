@@ -222,6 +222,38 @@ export class TicketsService {
     });
   }
 
+  static async getTicketByCode(ticketCode: string) {
+    return await prisma.tickets.findUnique({
+      where: { ticketCode },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            clientCode: true,
+            status: true
+          }
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            status: true
+          }
+        },
+      },
+    });
+  }
+
   static async updateTicket(id: string, updateData: any) {
     return await prisma.tickets.update({
       where: { id },

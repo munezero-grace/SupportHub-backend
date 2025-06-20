@@ -227,6 +227,24 @@ class TicketsController {
     }
   }
 
+  static async getTicketByCode(req: Request, res: Response): Promise<Response> {
+    try {
+      const { ticketCode } = req.params;
+      const ticket = await TicketsService.getTicketByCode(ticketCode);
+
+      if (!ticket) {
+        return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+      }
+
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.TICKET_RETRIEVED,
+        data: ticket
+      });
+    } catch (error) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET });
+    }
+  }
+
   static async updateTicket(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
