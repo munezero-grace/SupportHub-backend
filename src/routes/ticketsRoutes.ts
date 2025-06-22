@@ -1,4 +1,4 @@
-import { Router} from "express";
+import { Router } from "express";
 import multer from "multer";
 import TicketsController from "../controllers/tickets.controller";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -16,7 +16,7 @@ const upload = multer({ dest: "uploads/" });
 router.post(
   "/",
   WrapAsync(authenticateUser),
-  upload.single("file"),
+  upload.array("files", 10),
   validateRequest(ticketSchema),
   WrapAsync(TicketsController.createTicket)
 );
@@ -48,6 +48,7 @@ router.get(
 router.put(
   "/:id",
   WrapAsync(authenticateUser),
+  upload.array("files", 10),
   validateRequest(updateTicketSchema),
   WrapAsync(TicketsController.updateTicket)
 );

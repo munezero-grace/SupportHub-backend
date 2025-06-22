@@ -63,7 +63,12 @@ export const ERROR_MESSAGES = {
   FAILED_TO_DELETE_CLIENT: "Failed to soft delete client",
   CLIENT_SOFT_DELETED: "Client is soft deleted and cannot be modified",
   USER_ID_MISSING_IN_REQUEST: "User ID missing in request",
-  COMPANY_NAME_REQUIRED: "companyName is required"
+  COMPANY_NAME_REQUIRED: "companyName is required",
+  FAILED_TO_FETCH_OVERVIEW_STATS: "Failed to fetch overview statistics",
+  FAILED_TO_FETCH_TICKETS_BY_STATUS: "Failed to fetch tickets by status",
+  FAILED_TO_FETCH_CLIENT_STATS: "Failed to fetch client statistics",
+  FAILED_TO_FETCH_PRODUCT_STATS: "Failed to fetch product statistics",
+  FAILED_TO_FETCH_DASHBOARD_DATA: "Failed to fetch dashboard data",
 };
 
 export const RESPONSE_STATUS = {

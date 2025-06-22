@@ -22,7 +22,7 @@ router
     WrapAsync(clientController.createClient)
   );
 
-router.delete(
+router.patch(
   "/:clientId/soft-delete",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),

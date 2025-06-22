@@ -71,12 +71,32 @@ export class ClientController {
     }
   }
 
-  async getAllClients(_req: Request, res: Response) {
-    const clients = await clientService.findAllClients();
-    res.status(HTTP_OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: clients,
-    });
+  async getAllClients(req: Request, res: Response) {
+    try {
+      const includeSoftDeleted = req.query.includeSoftDeleted === "true";
+      const clients = await clientService.findAllClients({
+        onlySoftDeleted: includeSoftDeleted,
+      });
+      if (
+        includeSoftDeleted &&
+        Array.isArray(clients) &&
+        clients.length === 0
+      ) {
+        return res.status(HTTP_NOT_FOUND).json({
+          status: RESPONSE_STATUS.ERROR,
+          message: "No soft deleted clients found.",
+        });
+      }
+      return res.status(HTTP_OK).json({
+        status: RESPONSE_STATUS.SUCCESS,
+        data: clients,
+      });
+    } catch (error) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: RESPONSE_STATUS.ERROR,
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_CLIENTS,
+      });
+    }
   }
 
   async getClientById(req: Request, res: Response) {

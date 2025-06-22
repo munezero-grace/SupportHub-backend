@@ -1,17 +1,9 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import DashboardController from "../controllers/dashboard.controller";
 import { errorHandler } from "../middlewares/errorHandler";
 import { WrapAsync } from "../middlewares/wrapAsync";
 
 const router = Router();
-
-router.get("/test", (_req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Dashboard API is working!",
-    timestamp: new Date().toISOString(),
-  });
-});
 
 router.get("/overview", WrapAsync(DashboardController.getOverviewStats));
 router.get(

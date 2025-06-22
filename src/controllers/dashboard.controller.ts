@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { DashboardService } from "../services/dashboard.service";
+import { ERROR_MESSAGES } from "../constants/response/errors";
 
 export class DashboardController {
   static async getOverviewStats(_req: Request, res: Response) {
@@ -16,10 +17,9 @@ export class DashboardController {
         },
       });
     } catch (error) {
-      console.error("Error fetching overview stats:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch overview statistics",
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_OVERVIEW_STATS,
       });
     }
   }
@@ -33,10 +33,9 @@ export class DashboardController {
         data: ticketsByStatus,
       });
     } catch (error) {
-      console.error("Error fetching tickets by status:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch tickets by status",
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_TICKETS_BY_STATUS,
       });
     }
   }
@@ -50,10 +49,9 @@ export class DashboardController {
         data: clientStats,
       });
     } catch (error) {
-      console.error("Error fetching client stats:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch client statistics",
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_CLIENT_STATS,
       });
     }
   }
@@ -67,10 +65,9 @@ export class DashboardController {
         data: productStats,
       });
     } catch (error) {
-      console.error("Error fetching product stats:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch product statistics",
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_PRODUCT_STATS,
       });
     }
   }
@@ -88,13 +85,6 @@ export class DashboardController {
       const statusDistribution =
         await DashboardService.getTicketStatusDistribution();
 
-      const ticketCounts = {
-        new: ticketsByStatus.new.length,
-        in_progress: ticketsByStatus.in_progress.length,
-        awaiting_client: ticketsByStatus.awaiting_client.length,
-        resolved: ticketsByStatus.resolved.length,
-      };
-
       const { ...filteredStats } = overviewStats;
 
       res.status(200).json({
@@ -104,16 +94,15 @@ export class DashboardController {
             stats: filteredStats,
             statusDistribution,
           },
-          tickets: ticketCounts,
+          tickets: ticketsByStatus,
           clients: clientStats,
           products: productStats,
         },
       });
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
       res.status(500).json({
         success: false,
-        message: "Failed to fetch dashboard data",
+        message: ERROR_MESSAGES.FAILED_TO_FETCH_DASHBOARD_DATA,
       });
     }
   }
