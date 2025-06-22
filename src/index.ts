@@ -12,6 +12,7 @@ import { setupSwagger } from "./documentations/swagger-docs";
 import ticketsRoutes from "./routes/ticketsRoutes";
 import userRoutes from "./routes/userRoutes";
 import { authenticateUser } from "./middlewares/authenticateUser";
+import dashboardRoutes from "./routes/dashboardRoutes";
 dotenv.config();
 
 const app = express();
@@ -34,7 +35,6 @@ app.use(limiter);
 if (process.env.NODE_ENV === "test") {
   const mockAuth = require("./middlewares/mockAuth").default;
   app.use((req, res, next) => {
-    
     if (req.path.startsWith("/api/auth") || req.path === "/api") return next();
     return mockAuth(req, res, next);
   });
@@ -44,6 +44,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/tickets", ticketsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use("/api", authenticateUser, userRoutes);
 
@@ -56,7 +57,6 @@ app.get("/api", (_req: Request, res: Response) => {
 const port = process.env.PORT || 5000;
 
 app.use(errorHandler);
-
 
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);

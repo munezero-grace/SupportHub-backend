@@ -1,30 +1,61 @@
-import { Router, Request, Response } from 'express';
-import multer from 'multer';
-import TicketsController from '../controllers/tickets.controller';
-import { validateRequest } from '../middlewares/validateRequest';
-import { errorHandler } from '../middlewares/errorHandler';
-import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-import { ticketSchema, updateTicketSchema } from '../validations/ticket.validation';
-import { WrapAsync } from '../middlewares/wrapAsync';
-import { authenticateUser } from '../middlewares/authenticateUser';
+import { Router} from "express";
+import multer from "multer";
+import TicketsController from "../controllers/tickets.controller";
+import { validateRequest } from "../middlewares/validateRequest";
+import { errorHandler } from "../middlewares/errorHandler";
+import {
+  ticketSchema,
+  updateTicketSchema,
+} from "../validations/ticket.validation";
+import { WrapAsync } from "../middlewares/wrapAsync";
+import { authenticateUser } from "../middlewares/authenticateUser";
 
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: "uploads/" });
 
-const createTicketHandler = (req: Request, res: Response) => {
-  return TicketsController.createTicket(req as AuthenticatedRequest, res);
-};
-
-const getUserTicketsHandler = (req: Request, res: Response) => {
-  return TicketsController.getUserTickets(req as AuthenticatedRequest, res);
-};
-
-router.post('/', WrapAsync(authenticateUser), upload.array('files'), validateRequest(ticketSchema), WrapAsync(createTicketHandler));
-router.get('/', WrapAsync(authenticateUser), WrapAsync(getUserTicketsHandler));
-router.get('/code/:ticketCode', WrapAsync(authenticateUser), WrapAsync(TicketsController.getTicketByCode));
-router.get('/:id', WrapAsync(authenticateUser), WrapAsync(TicketsController.getTicketById));
-router.put('/:id', WrapAsync(authenticateUser), validateRequest(updateTicketSchema), WrapAsync(TicketsController.updateTicket));
-router.delete('/:id', WrapAsync(authenticateUser), WrapAsync(TicketsController.deleteTicket));
+router.post(
+  "/",
+  WrapAsync(authenticateUser),
+  upload.single("file"),
+  validateRequest(ticketSchema),
+  WrapAsync(TicketsController.createTicket)
+);
+router.get(
+  "/",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getUserTickets)
+);
+router.get(
+  "/all",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getAllTickets)
+);
+router.get(
+  "/count",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getTicketsCount)
+);
+router.get(
+  "/code/:ticketCode",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getTicketByCode)
+);
+router.get(
+  "/:id",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getTicketById)
+);
+router.put(
+  "/:id",
+  WrapAsync(authenticateUser),
+  validateRequest(updateTicketSchema),
+  WrapAsync(TicketsController.updateTicket)
+);
+router.delete(
+  "/:id",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.deleteTicket)
+);
 
 router.use(errorHandler);
 

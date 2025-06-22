@@ -1,11 +1,11 @@
-import { Request, Response } from 'express';
-import { AuthenticatedRequest } from '../middlewares/authMiddleware';
-import { TicketsService } from '../services/tickets.service';
-import { UserService } from '../services/user.service';
-import cloudinary from '../utils/cloudinary';
-import { ClientService } from '../services/client.service';
-import { ERROR_MESSAGES } from '../constants/response/errors';
-import { SUCCESS_MESSAGES } from '../constants/response/successMessages';
+import { Request, Response } from "express";
+import { AuthenticatedRequest } from "../middlewares/authMiddleware";
+import { TicketsService } from "../services/tickets.service";
+import { UserService } from "../services/user.service";
+import cloudinary from "../utils/cloudinary";
+import { ClientService } from "../services/client.service";
+import { ERROR_MESSAGES } from "../constants/response/errors";
+import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 import {
   HTTP_OK,
   HTTP_CREATED,
@@ -27,21 +27,28 @@ class TicketsController {
       const userId = authReq.user?.id;
 
       if (!userId) {
-        return res.status(HTTP_ACCESS_DENIED).json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
       }
 
       const userExists = await TicketsService.checkUserExists(userId);
       if (!userExists) {
-        return res.status(HTTP_ACCESS_DENIED).json({ error: ERROR_MESSAGES.USER_DOES_NOT_EXIST });
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.USER_DOES_NOT_EXIST });
       }
 
       const userRole = await getUserRole(userId);
-      const isAdmin = userRole?.includes('admin') || userRole?.includes('super_admin');
+      const isAdmin =
+        userRole?.includes("admin") || userRole?.includes("super_admin");
 
       if (!isAdmin) {
         const client = await clientService.findClientByUserId(userId);
-        if (!client || 'error' in client) {
-          return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER });
+        if (!client || "error" in client) {
+          return res
+            .status(HTTP_BAD_REQUEST)
+            .json({ error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER });
         }
       }
 
@@ -55,7 +62,7 @@ class TicketsController {
         }
       } else if (req.file) {
         const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'tickets',
+          folder: "tickets",
         });
         imageUrls.push(result.secure_url);
       }
@@ -68,8 +75,10 @@ class TicketsController {
         };
       } else {
         const client = await clientService.findClientByUserId(userId);
-        if (!client || 'error' in client) {
-          return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER });
+        if (!client || "error" in client) {
+          return res
+            .status(HTTP_BAD_REQUEST)
+            .json({ error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER });
         }
         ticketData = {
           ...req.body,
@@ -78,20 +87,25 @@ class TicketsController {
         };
       }
 
-      const ticketResult = await TicketsService.createTicket(userId, ticketData);
+      const ticketResult = await TicketsService.createTicket(
+        userId,
+        ticketData
+      );
 
-      if (!ticketResult || 'error' in ticketResult) {
+      if (!ticketResult || "error" in ticketResult) {
         return res.status(HTTP_BAD_REQUEST).json({
-          error: ticketResult?.error || ERROR_MESSAGES.GENERAL_ERROR
+          error: ticketResult?.error || ERROR_MESSAGES.GENERAL_ERROR,
         });
       }
 
       const user = await userService.getUserById(userId);
-      const userName = user ? `${user.firstName} ${user.lastName}` : 'Unknown';
+      const userName = user ? `${user.firstName} ${user.lastName}` : "Unknown";
 
-      const product = ticketResult.productId ? await prisma.products.findUnique({
-        where: { id: ticketResult.productId },
-      }) : null;
+      const product = ticketResult.productId
+        ? await prisma.products.findUnique({
+            where: { id: ticketResult.productId },
+          })
+        : null;
 
       const slackMessage = [
         `*New ticket created:*\n${ticketResult.title}(${ticketResult.ticketCode})`,
@@ -106,40 +120,45 @@ class TicketsController {
         await sendSlackNotification(slackMessage);
        
       } catch (err) {
-        console.error('Failed to send Slack notification:', err);
+        console.error("Failed to send Slack notification:", err);
       }
 
       return res.status(HTTP_CREATED).json({
         message: SUCCESS_MESSAGES.TICKET_CREATED,
-        data: ticketResult
+        data: ticketResult,
       });
     } catch (error: any) {
       console.error('Error in createTicket:', error);
       console.error('Request body:', req.body);
       return res.status(HTTP_BAD_REQUEST).json({
-        error: error.message || ERROR_MESSAGES.GENERAL_ERROR
+        error: error.message || ERROR_MESSAGES.GENERAL_ERROR,
       });
     }
   }
 
-  static async getUserTickets(req: AuthenticatedRequest, res: Response): Promise<Response> {
+  static async getUserTickets(req: Request, res: Response): Promise<Response> {
     try {
-      const userId = req.user?.id;
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
 
       if (!userId) {
-        return res.status(HTTP_ACCESS_DENIED).json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
       }
 
       const userExists = await TicketsService.checkUserExists(userId);
       if (!userExists) {
-        return res.status(HTTP_ACCESS_DENIED).json({ error: ERROR_MESSAGES.USER_DOES_NOT_EXIST });
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.USER_DOES_NOT_EXIST });
       }
 
       const userRole = await getUserRole(userId);
-      const isAdmin = userRole === 'super_admin';
+      const isAdmin = userRole === "super_admin";
 
       const queryOptions = {
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ createdAt: "desc" }],
         include: {
           client: {
             select: {
@@ -154,8 +173,8 @@ class TicketsController {
               firstName: true,
               lastName: true,
               email: true,
-            }
-          }
+            },
+          },
         },
       };
 
@@ -164,20 +183,16 @@ class TicketsController {
       if (!isAdmin) {
         try {
           const client = await clientService.findClientByUserId(userId);
-          if (!client || 'error' in client) {
-            whereCondition.OR = [
-              { createdBy: userId }
-            ];
+          if (!client || "error" in client) {
+            whereCondition.OR = [{ createdBy: userId }];
           } else {
             whereCondition.OR = [
               { createdBy: userId },
-              { clientId: client.id }
+              { clientId: client.id },
             ];
           }
         } catch (clientError) {
-          whereCondition.OR = [
-            { createdBy: userId }
-          ];
+          whereCondition.OR = [{ createdBy: userId }];
         }
       }
 
@@ -185,16 +200,18 @@ class TicketsController {
         (queryOptions as any).where = whereCondition;
       }
 
-      const tickets = await TicketsService.getUserTicketsWithOptions(queryOptions);
+      const tickets = await TicketsService.getUserTicketsWithOptions(
+        queryOptions
+      );
 
       return res.status(HTTP_OK).json({
         data: tickets || [],
-        message: SUCCESS_MESSAGES.TICKETS_RETRIEVED
+        message: SUCCESS_MESSAGES.TICKETS_RETRIEVED,
       });
     } catch (error: any) {
-      console.error('Error in getUserTickets:', error);
+      console.error("Error in getUserTickets:", error);
       return res.status(HTTP_BAD_REQUEST).json({
-        error: error.message || ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKETS
+        error: error.message || ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKETS,
       });
     }
   }
@@ -205,15 +222,19 @@ class TicketsController {
       const ticket = await TicketsService.getTicketById(id);
 
       if (!ticket) {
-        return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+        return res
+          .status(HTTP_NOT_FOUND)
+          .json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
       }
 
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.TICKET_RETRIEVED,
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
-      return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET });
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET });
     }
   }
 
@@ -223,15 +244,19 @@ class TicketsController {
       const ticket = await TicketsService.getTicketByCode(ticketCode);
 
       if (!ticket) {
-        return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+        return res
+          .status(HTTP_NOT_FOUND)
+          .json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
       }
 
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.TICKET_RETRIEVED,
-        data: ticket
+        data: ticket,
       });
     } catch (error) {
-      return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET });
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET });
     }
   }
 
@@ -242,13 +267,22 @@ class TicketsController {
 
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.TICKET_UPDATED,
-        data: ticket
+        data: ticket,
       });
     } catch (error: unknown) {
-      if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2025') {
-        return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as any).code === "P2025"
+      ) {
+        return res
+          .status(HTTP_NOT_FOUND)
+          .json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
       } else {
-        return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_UPDATE_TICKET });
+        return res
+          .status(HTTP_BAD_REQUEST)
+          .json({ error: ERROR_MESSAGES.FAILED_TO_UPDATE_TICKET });
       }
     }
   }
@@ -259,15 +293,90 @@ class TicketsController {
       const ticket = await TicketsService.getTicketById(id);
 
       if (!ticket) {
-        return res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+        return res
+          .status(HTTP_NOT_FOUND)
+          .json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
       }
 
       await TicketsService.deleteTicket(id);
       return res.status(204).json({
-        message: SUCCESS_MESSAGES.TICKET_DELETED
+        message: SUCCESS_MESSAGES.TICKET_DELETED,
       });
     } catch (error) {
-      return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.FAILED_TO_DELETE_TICKET });
+      return res
+        .status(HTTP_BAD_REQUEST)
+        .json({ error: ERROR_MESSAGES.FAILED_TO_DELETE_TICKET });
+    }
+  }
+
+  static async getAllTickets(req: Request, res: Response): Promise<Response> {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
+
+      if (!userId) {
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+      }
+
+      // Check if user is admin
+      const userRole = await getUserRole(userId);
+      const isAdmin =
+        userRole?.includes("admin") || userRole?.includes("super_admin");
+
+      if (!isAdmin) {
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+      }
+
+      const tickets = await TicketsService.getAllTickets();
+
+      return res.status(HTTP_OK).json({
+        data: tickets || [],
+        message: SUCCESS_MESSAGES.TICKETS_RETRIEVED,
+      });
+    } catch (error: any) {
+      console.error("Error in getAllTickets:", error);
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message || ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKETS,
+      });
+    }
+  }
+
+  static async getTicketsCount(req: Request, res: Response): Promise<Response> {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const userId = authReq.user?.id;
+
+      if (!userId) {
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+      }
+
+      const userRole = await getUserRole(userId);
+      const isAdmin =
+        userRole?.includes("admin") || userRole?.includes("super_admin");
+
+      if (!isAdmin) {
+        return res
+          .status(HTTP_ACCESS_DENIED)
+          .json({ error: ERROR_MESSAGES.UNAUTHORIZED });
+      }
+
+      const counts = await TicketsService.getTicketsCounts();
+
+      return res.status(HTTP_OK).json({
+        data: counts,
+        message: "Ticket counts retrieved successfully",
+      });
+    } catch (error: any) {
+      console.error("Error in getTicketsCount:", error);
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message || ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKETS,
+      });
     }
   }
 }
