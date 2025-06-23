@@ -62,6 +62,8 @@ export const ERROR_MESSAGES = {
   PRODUCT_REMOVE_CLIENT_FAILED: "Failed to remove client from product",
   FAILED_TO_DELETE_CLIENT: "Failed to soft delete client",
   CLIENT_SOFT_DELETED: "Client is soft deleted and cannot be modified",
+  USER_ID_MISSING_IN_REQUEST: "User ID missing in request",
+  COMPANY_NAME_REQUIRED: "companyName is required"
 };
 
 export const RESPONSE_STATUS = {

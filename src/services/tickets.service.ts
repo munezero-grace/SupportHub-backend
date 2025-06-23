@@ -33,8 +33,8 @@ export class TicketsService {
     return `T-${nextCodeNumber}`;
   }
 
-  static async createTicket(userId: string, ticketData: CreateTicketData) {
-    const { title, priority, imageUrl, clientId, productId, product, tags, dueDate, internalNotes, description } = ticketData;
+  static async createTicket(userId: string, ticketData: CreateTicketData & { imageUrls?: string[] }) {
+    const { title, priority, imageUrls, clientId, productId, product, tags, dueDate, internalNotes, description } = ticketData;
 
     const userClient = await clientService.findClientByUserId(userId);
 
@@ -85,7 +85,7 @@ export class TicketsService {
         title,
         status: StatusEnum.new,
         priority: priority || PriorityEnum.medium,
-        imageUrl,
+        imageUrl: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null,
         description,
         internalNotes,
         ...(tags ? { tags: typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags } : {}),
@@ -109,6 +109,17 @@ export class TicketsService {
         ...(dueDate && { dueDate: new Date(dueDate) })
       }
     });
+
+    if (imageUrls && imageUrls.length > 0) {
+      for (const url of imageUrls) {
+        await prisma.ticketAttachment.create({
+          data: {
+            ticketId: ticket.id,
+            fileUrl: url
+          }
+        });
+      }
+    }
 
     const completeTicket = await prisma.tickets.findUnique({
       where: { id: ticket.id },
@@ -134,9 +145,11 @@ export class TicketsService {
             id: true,
             name: true,
             productCode: true,
-            status: true
+            status: true,
+            updatedAt: true
           }
-        }
+        },
+        TicketAttachments: true
       }
     });
 
@@ -218,6 +231,7 @@ export class TicketsService {
             name: true,
           },
         },
+        TicketAttachments: true
       },
     });
   }

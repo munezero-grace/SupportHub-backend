@@ -67,6 +67,7 @@ CREATE TABLE "Clients" (
     "id" TEXT NOT NULL,
     "clientCode" TEXT NOT NULL,
     "companyName" TEXT,
+    "companyDomain" TEXT,
     "supportTier" "SupportTier" NOT NULL DEFAULT 'standard',
     "status" "ClientStatus" NOT NULL DEFAULT 'inactive',
     "createdBy" TEXT NOT NULL,
@@ -106,6 +107,17 @@ CREATE TABLE "Tickets" (
     "productId" TEXT,
 
     CONSTRAINT "Tickets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TicketAttachments" (
+    "id" TEXT NOT NULL,
+    "ticketId" TEXT NOT NULL,
+    "fileUrl" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "TicketAttachments_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -167,6 +179,9 @@ ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_clientId_fkey" FOREIGN KEY ("clien
 
 -- AddForeignKey
 ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TicketAttachments" ADD CONSTRAINT "TicketAttachments_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "Tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserTickets" ADD CONSTRAINT "UserTickets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

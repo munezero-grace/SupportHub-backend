@@ -19,7 +19,7 @@ const getUserTicketsHandler = (req: Request, res: Response) => {
   return TicketsController.getUserTickets(req as AuthenticatedRequest, res);
 };
 
-router.post('/', WrapAsync(authenticateUser), upload.single('file'), validateRequest(ticketSchema), WrapAsync(createTicketHandler));
+router.post('/', WrapAsync(authenticateUser), upload.array('files'), validateRequest(ticketSchema), WrapAsync(createTicketHandler));
 router.get('/', WrapAsync(authenticateUser), WrapAsync(getUserTicketsHandler));
 router.get('/code/:ticketCode', WrapAsync(authenticateUser), WrapAsync(TicketsController.getTicketByCode));
 router.get('/:id', WrapAsync(authenticateUser), WrapAsync(TicketsController.getTicketById));
