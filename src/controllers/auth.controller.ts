@@ -107,11 +107,22 @@ class AuthController {
           : undefined,
     });
 
+    if (role?.name === 'client' && client) {
+      const clientStatus = await prisma.clients.findUnique({
+        where: { id: client.id },
+        select: { status: true }
+      });
+      if (clientStatus?.status === 'inactive') {
+        return res.status(HTTP_BAD_REQUEST).json({ message: 'Your client account is inactive.' });
+      }
+    }
+
     const responsePayload = {
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
     res.status(HTTP_OK).json(responsePayload);
+    return;
   };
 
   public googleSignIn = async (req: Request, res: Response) => {
@@ -191,7 +202,7 @@ class AuthController {
       });
     }
 
-    const client = user.Clients?.[0];
+    let client: { id: string; clientCode: string; companyName: string | null; deletedAt: Date | null; } | null = user.Clients?.[0] || null;
     if (client?.deletedAt) {
       res
         .status(HTTP_BAD_REQUEST)
@@ -206,6 +217,15 @@ class AuthController {
     const role = userRole
       ? await prisma.roles.findUnique({ where: { id: userRole.roleId } })
       : null;
+    client = await prisma.clients.findFirst({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        clientCode: true,
+        companyName: true,
+        deletedAt: true,
+      },
+    });
 
     const token = generateToken({
       id: user.id,

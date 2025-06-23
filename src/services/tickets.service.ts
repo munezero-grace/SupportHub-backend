@@ -237,6 +237,7 @@ export class TicketsService {
         owner: true,
         client: {
           select: {
+            id: true,
             companyName: true,
           },
         },

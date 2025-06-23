@@ -67,10 +67,12 @@ CREATE TABLE "Clients" (
     "id" TEXT NOT NULL,
     "clientCode" TEXT NOT NULL,
     "companyName" TEXT,
+    "companyDomain" TEXT,
     "supportTier" "SupportTier" NOT NULL DEFAULT 'standard',
     "status" "ClientStatus" NOT NULL DEFAULT 'inactive',
     "createdBy" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "deletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
