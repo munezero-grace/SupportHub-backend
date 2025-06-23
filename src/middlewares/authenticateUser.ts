@@ -20,6 +20,10 @@ export async function authenticateUser(
         const secret = process.env.JWT_SECRET || "testsecret";
         const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
         (req as any).user = decoded;
+        if (decoded.client && decoded.client.id) {
+            (req as any).user.clientId = decoded.client.id;
+        }
+
         return next();
     } catch (err) {
         if (err instanceof TokenExpiredError) {

@@ -12,10 +12,11 @@ import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
   HTTP_ACCESS_DENIED,
-} from "../constants/httpStatusCodes";
-import { sendSlackNotification } from "../utils/slackNotifier";
-import prisma from "../lib/prisma";
-import { getUserRole } from "../helpers/getUserRole";
+} from '../constants/httpStatusCodes';
+import { sendSlackNotification } from '../utils/slackNotifier';
+import  prisma  from '../lib/prisma';
+import { getUserRole } from '../helpers/getUserRole';
+import { StatusEnum, PriorityEnum } from '@prisma/client';
 
 const clientService = new ClientService();
 const userService = new UserService();
@@ -183,8 +184,17 @@ class TicketsController {
               firstName: true,
               lastName: true,
               email: true,
-            },
+            }
           },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              productCode: true,
+              status: true,
+              updatedAt: true
+            }
+          }
         },
       };
 
@@ -229,12 +239,19 @@ class TicketsController {
   static async getTicketById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
+      const user = req.user;
       const ticket = await TicketsService.getTicketById(id);
 
       if (!ticket) {
         return res
           .status(HTTP_NOT_FOUND)
           .json({ error: ERROR_MESSAGES.TICKET_NOT_FOUND });
+      }
+      if (user && user.role === 'client') {
+        const clientId = (user as any).clientId;
+        if (!ticket.client || ticket.client.id !== clientId) {
+          return res.status(HTTP_BAD_REQUEST).json({ error: 'You are not authorized to view this ticket.' });
+        }
       }
 
       return res.status(HTTP_OK).json({
@@ -273,8 +290,28 @@ class TicketsController {
   static async updateTicket(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const ticket = await TicketsService.updateTicket(id, req.body);
-
+      const user = req.user;
+      if (user && (user.role === 'client' || user.role === 'user')) {
+        return res.status(403).json({ error: 'You are not authorized to update tickets.' });
+      }
+      const { status, priority } = req.body;
+      const updateData: any = {};
+      if ('status' in req.body) {
+        if (!Object.values(StatusEnum).includes(status)) {
+          return res.status(400).json({ error: `Invalid status. Allowed: ${Object.values(StatusEnum).join(', ')}` });
+        }
+        updateData.status = status;
+      }
+      if ('priority' in req.body) {
+        if (!Object.values(PriorityEnum).includes(priority)) {
+          return res.status(400).json({ error: `Invalid priority. Allowed: ${Object.values(PriorityEnum).join(', ')}` });
+        }
+        updateData.priority = priority;
+      }
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ error: 'No valid fields to update.' });
+      }
+      const ticket = await TicketsService.updateTicket(id, updateData);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.TICKET_UPDATED,
         data: ticket,

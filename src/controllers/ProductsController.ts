@@ -12,9 +12,11 @@ import { ERROR_MESSAGES } from '../constants/response/errors';
 import { SUCCESS_MESSAGES } from '../constants/response/successMessages';
 import { c } from '../constants/errorMessages';
 import { ClientService } from '../services/client.service';
+import { PrismaClient } from '@prisma/client';
 
 const productService = new ProductsService();
 const clientService = new ClientService();
+const prisma = new PrismaClient();
 
 export default class ProductsController {
     static async getProductsByClientCode(req: Request, res: Response): Promise<Response> {
@@ -66,11 +68,27 @@ export default class ProductsController {
     static async getProductById(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
+            const user = req.user;
             const product = await productService.getProductById(id);
 
             if (!product) {
                 res.status(HTTP_NOT_FOUND).json({ error: ERROR_MESSAGES.PRODUCT_NOT_FOUND });
                 return;
+            }
+            if (user && user.role === 'client') {
+                const clientId = (user as any).clientId;
+                if (clientId) {
+                    const clientProduct = await prisma.clientProduct.findFirst({
+                        where: {
+                            productId: id,
+                            clientId: clientId
+                        }
+                    });
+                    if (!clientProduct) {
+                        res.status(HTTP_BAD_REQUEST).json({ error: 'You are not authorized to view this product.' });
+                        return;
+                    }
+                }
             }
 
             res.status(HTTP_OK).json(product);
