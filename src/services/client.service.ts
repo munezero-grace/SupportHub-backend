@@ -109,15 +109,15 @@ export class ClientService {
       },
     });
   }
-  async findAllClients(
-    activeOnly: boolean = false
-  ): Promise<Clients[] | { error: string }> {
+  async findAllClients(options?: {
+    onlySoftDeleted?: boolean;
+  }): Promise<Clients[] | { error: string }> {
     try {
+      const onlySoftDeleted = options?.onlySoftDeleted;
       const clients = await prisma.clients.findMany({
-        where: {
-          deletedAt: null,
-          ...(activeOnly && { status: "active" }),
-        },
+        where: onlySoftDeleted
+          ? { deletedAt: { not: null } }
+          : { deletedAt: null },
         include: {
           user: {
             select: {

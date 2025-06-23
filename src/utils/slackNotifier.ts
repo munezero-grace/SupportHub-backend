@@ -21,8 +21,10 @@ export async function sendSlackNotification(message: string) {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to send Slack notification: " + response.statusText);
-    } 
+      throw new Error(
+        "Failed to send Slack notification: " + response.statusText
+      );
+    }
   } catch (error) {
     throw error;
   }

@@ -1,6 +1,6 @@
-import { PrismaClient, StatusEnum, PriorityEnum } from '@prisma/client';
-import { ClientService } from './client.service';
-import { ERROR_MESSAGES } from '../constants/response/errors';
+import { PrismaClient, StatusEnum, PriorityEnum } from "@prisma/client";
+import { ClientService } from "./client.service";
+import { ERROR_MESSAGES } from "../constants/response/errors";
 
 const prisma = new PrismaClient();
 const clientService = new ClientService();
@@ -21,14 +21,14 @@ interface CreateTicketData {
 export class TicketsService {
   private static async getNextTicketCode(): Promise<string> {
     const lastTicket = await prisma.tickets.findFirst({
-      orderBy: { ticketCode: 'desc' },
+      orderBy: { ticketCode: "desc" },
     });
 
     if (!lastTicket) {
-      return 'T-1001';
+      return "T-1001";
     }
 
-    const lastCodeNumber = parseInt(lastTicket.ticketCode.split('-')[1]);
+    const lastCodeNumber = parseInt(lastTicket.ticketCode.split("-")[1]);
     const nextCodeNumber = lastCodeNumber + 1;
     return `T-${nextCodeNumber}`;
   }
@@ -39,12 +39,14 @@ export class TicketsService {
     const userClient = await clientService.findClientByUserId(userId);
 
     let finalClientId = clientId;
-    if (!clientId && userClient && 'id' in userClient) {
+    if (!clientId && userClient && "id" in userClient) {
       finalClientId = userClient.id;
     } else if (clientId) {
       const clientExists = await clientService.findClientByIdField(clientId);
       if (!clientExists) {
-        return { error: ERROR_MESSAGES.CLIENT_DOES_NOT_EXIST.replace('{id}', clientId) };
+        return {
+          error: ERROR_MESSAGES.CLIENT_DOES_NOT_EXIST.replace("{id}", clientId),
+        };
       }
     } else if (!userClient) {
       return { error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER };
@@ -54,7 +56,7 @@ export class TicketsService {
 
     if (finalProductId) {
       const productExists = await prisma.products.findUnique({
-        where: { id: finalProductId }
+        where: { id: finalProductId },
       });
 
       if (!productExists) {
@@ -66,9 +68,9 @@ export class TicketsService {
           where: {
             clientId_productId: {
               clientId: finalClientId,
-              productId: finalProductId
-            }
-          }
+              productId: finalProductId,
+            },
+          },
         });
 
         if (!clientProduct) {
@@ -88,26 +90,38 @@ export class TicketsService {
         imageUrl: imageUrls && imageUrls.length > 0 ? imageUrls[0] : null,
         description,
         internalNotes,
-        ...(tags ? { tags: typeof tags === 'string' ? tags.split(',').map(tag => tag.trim()) : tags } : {}),
+        ...(tags
+          ? {
+              tags:
+                typeof tags === "string"
+                  ? tags.split(",").map((tag) => tag.trim())
+                  : tags,
+            }
+          : {}),
         ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
         owner: {
-          connect: { id: userId }
+          connect: { id: userId },
         },
         ...(finalClientId && {
           client: {
-            connect: { id: finalClientId }
-          }
+            connect: { id: finalClientId },
+          },
         }),
         ...(finalProductId && {
           product: {
-            connect: { id: finalProductId }
-          }
+            connect: { id: finalProductId },
+          },
         }),
         ...(description && { description }),
         ...(internalNotes && { internalNotes }),
-        ...(tags && { tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) }),
-        ...(dueDate && { dueDate: new Date(dueDate) })
-      }
+        ...(tags && {
+          tags: tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0),
+        }),
+        ...(dueDate && { dueDate: new Date(dueDate) }),
+      },
     });
 
     if (imageUrls && imageUrls.length > 0) {
@@ -129,16 +143,16 @@ export class TicketsService {
             id: true,
             firstName: true,
             lastName: true,
-            email: true
-          }
+            email: true,
+          },
         },
         client: {
           select: {
             id: true,
             clientCode: true,
             companyName: true,
-            status: true
-          }
+            status: true,
+          },
         },
         product: {
           select: {
@@ -166,27 +180,27 @@ export class TicketsService {
   static async getUserTickets(userId: string, isAdmin: boolean = false) {
     try {
       return await prisma.tickets.findMany({
-        where: isAdmin ? {} : {
-          OR: [
-            { createdBy: userId },
-            {
-              client: {
-                userId: userId
-              }
-            }
-          ]
-        },
-        orderBy: [
-          { createdAt: 'desc' }
-        ],
+        where: isAdmin
+          ? {}
+          : {
+              OR: [
+                { createdBy: userId },
+                {
+                  client: {
+                    userId: userId,
+                  },
+                },
+              ],
+            },
+        orderBy: [{ createdAt: "desc" }],
         include: {
           client: {
             select: {
               id: true,
               companyName: true,
               clientCode: true,
-              status: true
-            }
+              status: true,
+            },
           },
           product: {
             select: {
@@ -194,18 +208,18 @@ export class TicketsService {
               name: true,
               productCode: true,
               status: true,
-              updatedAt: true
-            }
+              updatedAt: true,
+            },
           },
           owner: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
     } catch (error) {
       throw error;
@@ -245,24 +259,24 @@ export class TicketsService {
             id: true,
             firstName: true,
             lastName: true,
-            email: true
-          }
+            email: true,
+          },
         },
         client: {
           select: {
             id: true,
             companyName: true,
             clientCode: true,
-            status: true
-          }
+            status: true,
+          },
         },
         product: {
           select: {
             id: true,
             name: true,
             productCode: true,
-            status: true
-          }
+            status: true,
+          },
         },
       },
     });
@@ -279,5 +293,79 @@ export class TicketsService {
     return await prisma.tickets.delete({
       where: { id },
     });
+  }
+
+  static async getAllTickets() {
+    return await prisma.tickets.findMany({
+      orderBy: [{ createdAt: "desc" }],
+      include: {
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            clientCode: true,
+            status: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            status: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async getTicketsCounts() {
+    const [total, open, newTickets, inProgress, assigned, awaiting, resolved] =
+      await Promise.all([
+        prisma.tickets.count(),
+        prisma.tickets.count({
+          where: {
+            status: {
+              in: ["new", "in_progress", "assigned", "awaiting_client"],
+            },
+          },
+        }),
+        prisma.tickets.count({
+          where: { status: "new" },
+        }),
+        prisma.tickets.count({
+          where: { status: "in_progress" },
+        }),
+        prisma.tickets.count({
+          where: { status: "assigned" },
+        }),
+        prisma.tickets.count({
+          where: { status: "awaiting_client" },
+        }),
+        prisma.tickets.count({
+          where: { status: "resolved" },
+        }),
+      ]);
+
+    return {
+      total,
+      open,
+      closed: resolved,
+      byStatus: {
+        new: newTickets,
+        in_progress: inProgress,
+        assigned,
+        awaiting_client: awaiting,
+        resolved,
+      },
+    };
   }
 }
