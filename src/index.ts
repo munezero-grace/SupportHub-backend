@@ -45,8 +45,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/tickets", ticketsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api", userRoutes);
-app.use("/api/settings", settingsRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/settings",  settingsRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({

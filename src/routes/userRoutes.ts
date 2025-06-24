@@ -22,8 +22,17 @@ router.put(
   WrapAsync(authenticateUser),
   WrapAsync(UsersController.updateUserProfile)
 );
-// router.get('/users', WrapAsync(authenticateUser), WrapAsync(UsersController.getAllUsers));
-router.delete('/users/:userId/soft-delete', WrapAsync(authenticateUser), WrapAsync(UsersController.softDeleteUser));
+
+router.put(
+  "/profile/company",
+  WrapAsync(authenticateUser),
+  WrapAsync(UsersController.updateUserCompanyProfile)
+);
+router.delete(
+  "/:id/soft-delete",
+  WrapAsync(authenticateUser),
+  WrapAsync(UsersController.softDeleteUser)
+);
 
 router.put(
   "/profile/company",

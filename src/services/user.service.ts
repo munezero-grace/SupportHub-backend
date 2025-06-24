@@ -18,7 +18,7 @@ export class UserService {
         `;
 
         if (!user || !Array.isArray(user) || user.length === 0) {
-          return { Error: ERROR_MESSAGES.USER_NOT_FOUND };
+          throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
         }
 
         const clients = await tx.$queryRaw`
@@ -28,7 +28,7 @@ export class UserService {
         `;
 
         if (Array.isArray(clients) && clients.length > 0) {
-          return { Error: ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS };
+          throw new Error(ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS);
         }
 
         await tx.$executeRaw`
@@ -55,6 +55,8 @@ export class UserService {
       };
     }
   }
+
+  // Removed unused method updateUserSettingsFromProfile as it is not implemented and parameters are unused
 
   async softDeleteUser(userId: string) {
     try {
@@ -159,11 +161,11 @@ export class UserService {
         });
 
         if (!user) {
-          return { Error: ERROR_MESSAGES.USER_NOT_FOUND };
+          throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
         }
 
         if (user.Clients.length > 0) {
-          return { Error: ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS };
+          throw new Error(ERROR_MESSAGES.CANNOT_DELETE_USER_WITH_CLIENTS);
         }
 
         await tx.users.delete({
@@ -198,7 +200,9 @@ export class UserService {
           userRoles: {
             select: {
               role: {
-                select: { name: true },
+                select: {
+                  name: true,
+                },
               },
             },
           },
@@ -211,7 +215,7 @@ export class UserService {
               createdAt: true,
             },
           },
-        },
+        }
       });
       if (!findUser) {
         throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
@@ -220,28 +224,33 @@ export class UserService {
     } catch (error) {
       throw {
         status: HTTP_BAD_REQUEST,
-        message:
-          error instanceof Error
-            ? error.message
-            : ERROR_MESSAGES.USER_NOT_FOUND,
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.USER_NOT_FOUND,
       };
     }
   }
 
   async updateUserProfile(userId: string, data: SignupRequestBody) {
     try {
+      
+      const { firstName, lastName, email, password } = data;
+      const updateData: any = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (email !== undefined) updateData.email = email;
+      if (password !== undefined) updateData.password = password;
+
       const updatedUser = await prisma.users.update({
         where: { id: userId },
-        data: { ...data },
+        data: updateData,
       });
+
       return updatedUser;
     } catch (error) {
       throw {
         status: HTTP_BAD_REQUEST,
-        message:
-          error instanceof Error
-            ? error.message
-            : ERROR_MESSAGES.USER_DELETE_FAILED,
+        message: error instanceof Error ?
+          error.message :
+          ERROR_MESSAGES.USER_DELETE_FAILED,
       };
     }
   }
@@ -250,16 +259,17 @@ export class UserService {
     try {
       const updatedClient = await prisma.clients.update({
         where: { id: data.id, userId: userId },
-        data: { ...data },
+        data: {
+          ...data
+        },
       });
       return updatedClient;
     } catch (error) {
       throw {
         status: HTTP_BAD_REQUEST,
-        message:
-          error instanceof Error
-            ? error.message
-            : ERROR_MESSAGES.USER_DELETE_FAILED,
+        message: error instanceof Error ?
+          error.message :
+          ERROR_MESSAGES.USER_DELETE_FAILED,
       };
     }
   }

@@ -1,4 +1,7 @@
 import prisma from "../lib/prisma";
+import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
+
+type SuccessMessageKey = keyof typeof SUCCESS_MESSAGES;
 
 class SettingsService {
   static async getSlackSettings(userId: string) {
@@ -43,7 +46,23 @@ class SettingsService {
         statusChanges: data.statusChanges,
       },
     });
-    return updatedSettings;
+
+
+    let messageKey: SuccessMessageKey = "USER_SETTINGS_UPDATED_SUCCESSFULLY";
+
+    if (
+      (data.newTickets !== undefined || data.statusChanges !== undefined) &&
+      (data.slackWebhookUrl === undefined || data.slackWebhookUrl === '')
+    ) {
+      const enabled = (data.newTickets === true) || (data.statusChanges === true);
+      messageKey = enabled ? "SLACK_NOTIFICATION_ENABLED" : "SLACK_NOTIFICATION_DISABLED";
+    } else if (data.slackWebhookUrl !== undefined && data.slackWebhookUrl !== '') {
+      messageKey = "WEBHOOK_SAVED_SUCCESSFULLY";
+    }
+
+    const message = SUCCESS_MESSAGES[messageKey] || "User settings updated successfully.";
+
+    return { updatedSettings, message };
   }
 }
 
