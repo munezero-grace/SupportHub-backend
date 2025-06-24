@@ -75,6 +75,29 @@ class UsersController {
       });
     }
   }
+
+  static async softDeleteUser(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.params.userId;
+      const result = await userService.softDeleteUser(userId);
+      if ('error' in result) {
+        return res.status(404).json({
+          status: 'error',
+          message: result.error,
+        });
+      }
+      return res.status(HTTP_OK).json({
+        status: 'success',
+        data: result,
+        message: SUCCESS_MESSAGES.CLIENT_DELETED,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: 'error',
+        message: error.message || 'Failed to soft delete user',
+      });
+    }
+  }
 }
 
 export default UsersController;

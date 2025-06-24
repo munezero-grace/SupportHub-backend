@@ -23,7 +23,7 @@ class TicketsController {
     }
   }
 
-  static async getUserTickets(req: Request, res: Response): Promise<Response> {
+  static async getAllTickets(_: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id as string;
       const result = await TicketsService.getUserTicketsControllerLogic(userId);

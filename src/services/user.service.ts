@@ -56,6 +56,31 @@ export class UserService {
     }
   }
 
+  async softDeleteUser(userId: string) {
+    try {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return { error: ERROR_MESSAGES.USER_NOT_FOUND };
+      }
+
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: { deletedAt: new Date() },
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw {
+        status: HTTP_BAD_REQUEST,
+        message:
+          error instanceof Error ? error.message : ERROR_MESSAGES.USER_DELETE_FAILED,
+      };
+    }
+  }
+
   async getUserById(userId: string) {
     const user = await prisma.users.findUnique({
       where: { id: userId },
@@ -71,6 +96,9 @@ export class UserService {
 
   async getAllUsersWithRoles() {
     const users = await prisma.users.findMany({
+      where: {
+        deletedAt: null,
+      },
       select: {
         id: true,
         firstName: true,

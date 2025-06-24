@@ -27,6 +27,7 @@ CREATE TABLE "Users" (
     "providerId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
@@ -132,6 +133,20 @@ CREATE TABLE "UserTickets" (
     CONSTRAINT "UserTickets_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "IntegrationSettings" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "slackWebhookUrl" TEXT NOT NULL,
+    "newTickets" BOOLEAN NOT NULL DEFAULT false,
+    "ticketAssignments" BOOLEAN NOT NULL DEFAULT false,
+    "statusChanges" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IntegrationSettings_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 
@@ -155,6 +170,9 @@ CREATE UNIQUE INDEX "Tickets_ticketCode_key" ON "Tickets"("ticketCode");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserTickets_userId_ticketId_key" ON "UserTickets"("userId", "ticketId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IntegrationSettings_userId_key" ON "IntegrationSettings"("userId");
 
 -- AddForeignKey
 ALTER TABLE "UserRoles" ADD CONSTRAINT "UserRoles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -188,3 +206,6 @@ ALTER TABLE "UserTickets" ADD CONSTRAINT "UserTickets_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "UserTickets" ADD CONSTRAINT "UserTickets_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "Tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IntegrationSettings" ADD CONSTRAINT "IntegrationSettings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
