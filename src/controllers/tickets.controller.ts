@@ -184,7 +184,7 @@ class TicketsController {
               firstName: true,
               lastName: true,
               email: true,
-            }
+            },
           },
           product: {
             select: {
