@@ -23,4 +23,5 @@ export const SUCCESS_MESSAGES = {
   USER_SETTINGS_RETRIEVED_SUCCESSFULLY: "User settings retrieved successfully",
   USER_SETTINGS_UPDATED_SUCCESSFULLY: "Profile updated successfully",
   USER_COMPANY_UPDATED_SUCCESSFULLY: "Company updated successfully",
+  TICKET_COUNT_RETRIEVED_SUCCESSFULLY: "Ticket counts retrieved successfully",
 };
