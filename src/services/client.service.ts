@@ -1,19 +1,27 @@
-import { Clients } from "@prisma/client";
+import { PrismaClient, Clients, ClientStatus } from "@prisma/client";
+import { ERROR_MESSAGES } from "../constants/response/errors";
 import { CreateClientDto } from "../types/client";
 import * as bcrypt from "bcryptjs";
 import { UserRole } from "../types";
 import { generateClientCode } from "../helpers/generateClientCode";
-import { ERROR_MESSAGES } from "../constants/response/errors";
-import prisma from "../lib/prisma";
+import {
+  getClientById,
+  getUserByEmail,
+  userInfoSelect,
+  softDeleteClientById,
+  restoreClientById,
+  addProductToClientHelper,
+  removeProductFromClientHelper,
+} from "../helpers/clientHelpers";
+
+const prisma = new PrismaClient();
 
 export class ClientService {
   async createClient(
     data: CreateClientDto
   ): Promise<Clients | { error: string }> {
     try {
-      const existingUser = await prisma.users.findUnique({
-        where: { email: data.contactEmail },
-      });
+      const existingUser = await getUserByEmail(data.contactEmail);
 
       if (existingUser) {
         return { error: ERROR_MESSAGES.USER_EMAIL_EXISTS };
@@ -93,21 +101,7 @@ export class ClientService {
   }
 
   async findClientByIdField(clientId: string): Promise<Clients | null> {
-    return prisma.clients.findFirst({
-      where: {
-        id: clientId,
-        deletedAt: null,
-      },
-      include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    return getClientById(clientId);
   }
   async findAllClients(options?: {
     onlySoftDeleted?: boolean;
@@ -119,13 +113,7 @@ export class ClientService {
           ? { deletedAt: { not: null } }
           : { deletedAt: null },
         include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
+          user: { select: userInfoSelect },
           clientProducts: {
             include: {
               product: true,
@@ -202,20 +190,9 @@ export class ClientService {
   }
 
   async updateClient(
-    clientCode: string,
+    clientId: string,
     data: Partial<Clients>
-  ): Promise<Clients | { error: string }> {
-    const existingClient = await prisma.clients.findFirst({
-      where: {
-        clientCode,
-        deletedAt: null,
-      },
-    });
-
-    if (!existingClient) {
-      return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND_UPDATE };
-    }
-
+  ): Promise<Clients> {
     const allowedFields: (keyof Clients)[] = [
       "companyName",
       "supportTier",
@@ -227,208 +204,48 @@ export class ClientService {
         filteredData[key] = data[key];
       }
     }
-
     return await prisma.clients.update({
-      where: { clientCode },
+      where: { id: clientId },
       data: filteredData,
       include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        user: { select: userInfoSelect },
       },
     });
   }
 
   async updateClientStatus(
-    clientCode: string,
-    status: "active" | "inactive"
+    clientId: string,
+    status: string
   ): Promise<Clients | { error: string }> {
-    const existingClient = await prisma.clients.findFirst({
-      where: {
-        clientCode,
-        deletedAt: null,
-      },
-    });
-
-    if (!existingClient) {
-      return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND };
-    }
-
+    if (
+      ![ClientStatus.active, ClientStatus.inactive].includes(
+        status as ClientStatus
+      )
+    )
+      return { error: "Invalid status value" };
     return prisma.clients.update({
-      where: { clientCode },
-      data: { status },
+      where: { id: clientId },
+      data: { status: status as ClientStatus },
       include: {
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
-  }
-  async deleteClient(clientId: string): Promise<Clients | { error: string }> {
-    return prisma.$transaction(async (tx) => {
-      const client = await tx.clients.findFirst({
-        where: {
-          id: clientId,
-          deletedAt: null,
-        },
-        include: {
-          user: true,
-          clientProducts: true,
-        },
-      });
-
-      if (!client) {
-        return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND };
-      }
-
-      const softDeletedClient = await tx.clients.update({
-        where: { id: clientId },
-        data: {
-          deletedAt: new Date(),
-          status: "inactive",
-        },
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
-
-      return softDeletedClient;
-    });
-  }
-
-  async getProductsForClient(clientId: string) {
-    try {
-      const client = await prisma.clients.findFirst({
-        where: {
-          id: clientId,
-          deletedAt: null,
-        },
-        include: {
-          clientProducts: {
-            include: {
-              product: {
-                include: {
-                  clientProducts: {
-                    include: {
-                      client: {
-                        select: {
-                          id: true,
-                          companyName: true,
-                          status: true,
-                          supportTier: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      if (!client) {
-        return { error: ERROR_MESSAGES.CLIENT_NOT_FOUND };
-      }
-
-      return client.clientProducts.map((cp) => ({
-        ...cp.product,
-        clients: cp.product.clientProducts.map((ccp) => ccp.client),
-      }));
-    } catch (error) {
-      return {
-        error:
-          error instanceof Error
-            ? error.message
-            : ERROR_MESSAGES.FAILED_TO_GET_PRODUCTS_FOR_CLIENT,
-      };
-    }
-  }
-
-  async addProductToClient(clientId: string, productId: string) {
-    return prisma.clientProduct.create({
-      data: {
-        clientId,
-        productId,
+        user: { select: userInfoSelect },
       },
     });
   }
 
-  async removeProductFromClient(clientId: string, productId: string) {
-    return prisma.clientProduct.delete({
-      where: {
-        clientId_productId: {
-          clientId,
-          productId,
-        },
-      },
-    });
+  async deleteClient(clientId: string): Promise<Clients> {
+    return softDeleteClientById(clientId);
   }
 
-  async findByClientCode(clientCode: string): Promise<Clients | null> {
-    return prisma.clients.findFirst({
-      where: {
-        clientCode,
-        deletedAt: null,
-      },
-      include: {
-        user: true,
-        clientProducts: true,
-      },
-    });
-  }
   async softDeleteClient(
     clientId: string
   ): Promise<Clients | { error: string }> {
     try {
-      return await prisma.$transaction(async (tx) => {
-        const client = await tx.clients.findUnique({
-          where: { id: clientId },
-        });
+      const client = await getClientById(clientId, true);
 
-        if (!client) {
-          throw new Error(ERROR_MESSAGES.CLIENT_NOT_FOUND);
-        }
-
-        if (client.deletedAt) {
-          throw new Error(ERROR_MESSAGES.CLIENT_SOFT_DELETED);
-        }
-
-        const updatedClient = await tx.clients.update({
-          where: {
-            id: client.id,
-          },
-          data: {
-            deletedAt: new Date(),
-            status: "inactive",
-          },
-          include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
-        });
-
-        return updatedClient;
-      });
+      if (client && client.deletedAt) {
+        throw new Error(ERROR_MESSAGES.CLIENT_SOFT_DELETED);
+      }
+      return await softDeleteClientById(clientId);
     } catch (error) {
       return {
         error:
@@ -441,34 +258,12 @@ export class ClientService {
 
   async restoreClient(clientId: string): Promise<Clients | { error: string }> {
     try {
-      const clientArr =
-        await prisma.$queryRaw`SELECT * FROM "Clients" WHERE id = ${clientId} LIMIT 1`;
-      const client =
-        Array.isArray(clientArr) && clientArr.length > 0 ? clientArr[0] : null;
+      const client = await getClientById(clientId, true);
 
-      if (!client) {
-        throw new Error(ERROR_MESSAGES.CLIENT_NOT_FOUND);
-      }
-
-      if (!client.deletedAt) {
+      if (client && !client.deletedAt) {
         throw new Error("Client is not soft-deleted");
       }
-
-      const restoredClient = await prisma.clients.update({
-        where: { id: clientId },
-        data: { deletedAt: null, status: "active" },
-        include: {
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      });
-
-      return restoredClient;
+      return await restoreClientById(clientId);
     } catch (error) {
       return {
         error:
@@ -477,5 +272,30 @@ export class ClientService {
             : ERROR_MESSAGES.FAILED_TO_RESTORE_CLIENT,
       };
     }
+  }
+
+  async getProductsForClient(clientId: string) {
+    try {
+      const client = await getClientById(clientId);
+      return client!.clientProducts.map((cp: any) => ({
+        ...cp.product,
+        clients: cp.product.clientProducts.map((ccp: any) => ccp.client),
+      }));
+    } catch (error) {
+      return {
+        error:
+          error instanceof Error
+            ? error.message
+            : ERROR_MESSAGES.FAILED_TO_GET_PRODUCTS_FOR_CLIENT,
+      };
+    }
+  }
+
+  async addProductToClient(clientId: string, productId: string) {
+    return addProductToClientHelper(clientId, productId);
+  }
+
+  async removeProductFromClient(clientId: string, productId: string) {
+    return removeProductFromClientHelper(clientId, productId);
   }
 }

@@ -16,3 +16,9 @@ export interface SocialClientDto {
   provider: string;
   providerId: string;
 }
+
+export interface UserCompanyProfile {
+  id: string;
+  companyName?: string;
+  companyDomain?: string;
+}

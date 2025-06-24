@@ -4,259 +4,210 @@ import { CreateClientDto } from "../types/client";
 import {
   HTTP_CREATED,
   HTTP_OK,
-  HTTP_NOT_FOUND,
   HTTP_NO_CONTENT,
   HTTP_BAD_REQUEST,
 } from "../constants/httpStatusCodes";
-import { ERROR_MESSAGES, RESPONSE_STATUS } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
-import { c } from "../constants/errorMessages";
 
 const clientService = new ClientService();
 
 export class ClientController {
-  async createClient(req: Request, res: Response) {
+  static async createClient(req: Request, res: Response): Promise<Response> {
     try {
       const clientData: CreateClientDto = req.body;
       const client = await clientService.createClient(clientData);
       return res.status(HTTP_CREATED).json({
-        status: RESPONSE_STATUS.SUCCESS,
-        data: client,
         message: SUCCESS_MESSAGES.CLIENT_CREATED,
+        data: client,
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === ERROR_MESSAGES.USER_EMAIL_EXISTS) {
-          return res.status(HTTP_BAD_REQUEST).json({
-            status: RESPONSE_STATUS.ERROR,
-            message: ERROR_MESSAGES.USER_EMAIL_EXISTS,
-          });
-        }
-      }
-
-      return res.status(500).json({
-        status: RESPONSE_STATUS.ERROR,
-        message:
-          error instanceof Error
-            ? error.message
-            : ERROR_MESSAGES.CLIENT_CREATE_FAILED,
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
       });
     }
   }
 
-  async getClientByUserId(req: Request, res: Response) {
+  static async getClientByUserId(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
     try {
-      const userId = req.user?.id;
-
-      if (!userId) {
-        return res.status(401).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: ERROR_MESSAGES.INVALID_CREDENTIALS,
-        });
-      }
+      const userId = req.user?.id as string;
       const client = await clientService.findClientByUserId(userId);
-
-      if (!client) {
-        return res.status(HTTP_NOT_FOUND).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: ERROR_MESSAGES.CLIENT_NOT_FOUND,
-        });
-      }
-      return res.status(HTTP_OK).json({ status: "success", data: client });
-    } catch (error) {
-      return res.status(500).json({
-        status: RESPONSE_STATUS.ERROR,
-        message: ERROR_MESSAGES.GENERAL_ERROR,
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.CLIENTS_RETRIEVED,
+        data: client,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
       });
     }
   }
 
-  async getAllClients(req: Request, res: Response) {
+  static async getAllClients(req: Request, res: Response): Promise<Response> {
     try {
       const includeSoftDeleted = req.query.includeSoftDeleted === "true";
       const clients = await clientService.findAllClients({
         onlySoftDeleted: includeSoftDeleted,
       });
-      if (
-        includeSoftDeleted &&
-        Array.isArray(clients) &&
-        clients.length === 0
-      ) {
-        return res.status(HTTP_NOT_FOUND).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: "No soft deleted clients found.",
-        });
-      }
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
+        message: SUCCESS_MESSAGES.CLIENTS_RETRIEVED,
         data: clients,
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
-        message: ERROR_MESSAGES.FAILED_TO_FETCH_CLIENTS,
+        error: error.message,
       });
     }
   }
 
-  async getClientById(req: Request, res: Response) {
-    const { clientId } = req.params;
-    const client = await clientService.findClientByIdField(clientId);
-    if (!client) {
-      return res.status(HTTP_NOT_FOUND).json({
-        status: RESPONSE_STATUS.ERROR,
-        message: ERROR_MESSAGES.CLIENT_NOT_FOUND,
-      });
-    }
-
-    return res.status(HTTP_OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: client,
-    });
-  }
-
-  async updateClient(req: Request, res: Response) {
+  static async getClientById(req: Request, res: Response): Promise<Response> {
     try {
       const { clientId } = req.params;
-      const updateData = req.body;
-      const client = await clientService.updateClient(clientId, updateData);
+      const client = await clientService.findClientByIdField(clientId);
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
+        message: SUCCESS_MESSAGES.CLIENTS_RETRIEVED,
         data: client,
-        message: SUCCESS_MESSAGES.CLIENT_UPDATED,
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(HTTP_BAD_REQUEST).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: error.message,
-        });
-      }
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
-        message: ERROR_MESSAGES.GENERAL_ERROR,
+        error: error.message,
       });
     }
   }
-  async deleteClient(req: Request, res: Response) {
+
+  static async updateClient(req: Request, res: Response): Promise<Response> {
+    try {
+      const { clientId } = req.params;
+      const client = await clientService.updateClient(clientId, req.body);
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.CLIENT_UPDATED,
+        data: client,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
+      });
+    }
+  }
+
+  static async deleteClient(req: Request, res: Response): Promise<Response> {
     try {
       const { clientId } = req.params;
       await clientService.deleteClient(clientId);
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
         message: SUCCESS_MESSAGES.CLIENT_DELETED,
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(HTTP_BAD_REQUEST).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: error.message,
-        });
-      }
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
+        error: error.message,
       });
     }
   }
 
-  async updateClientStatus(req: Request, res: Response) {
-    const { clientId } = req.params;
-    const { status } = req.body;
-    if (!["active", "inactive"].includes(status)) {
-      return res.status(400).json({
-        status: RESPONSE_STATUS.ERROR,
-        message: "Invalid status value",
+  static async updateClientStatus(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
+      const { clientId } = req.params;
+      const { status } = req.body;
+      const client = await clientService.updateClientStatus(clientId, status);
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.CLIENT_UPDATED,
+        data: client,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
       });
     }
-    const client = await clientService.updateClientStatus(clientId, status);
-    return res.status(200).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: client,
-      message: `Client status updated to ${status}`,
-    });
   }
-  async getProductsForClient(req: Request, res: Response) {
+
+  static async getProductsForClient(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
     try {
       const { clientId } = req.params;
       const products = await clientService.getProductsForClient(clientId);
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
+        message: SUCCESS_MESSAGES.PRODUCTS_RETRIEVED,
         data: { products },
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
-        message:
-          error instanceof Error
-            ? error.message
-            : c.FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT,
+        error: error.message,
       });
     }
   }
 
-  async addProductToClient(req: Request, res: Response) {
-    const { clientId, productId } = req.params;
-    const clientProduct = await clientService.addProductToClient(
-      clientId,
-      productId
-    );
-    res.status(HTTP_CREATED).json(clientProduct);
+  static async addProductToClient(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
+      const { clientId, productId } = req.params;
+      const clientProduct = await clientService.addProductToClient(
+        clientId,
+        productId
+      );
+      return res.status(HTTP_CREATED).json({
+        message: SUCCESS_MESSAGES.CLIENT_ADDED_TO_PRODUCT,
+        data: clientProduct,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
+      });
+    }
   }
 
-  async removeProductFromClient(req: Request, res: Response) {
-    const { clientId, productId } = req.params;
-    await clientService.removeProductFromClient(clientId, productId);
-    res.status(HTTP_NO_CONTENT).send();
+  static async removeProductFromClient(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
+      const { clientId, productId } = req.params;
+      await clientService.removeProductFromClient(clientId, productId);
+      return res.status(HTTP_NO_CONTENT).send();
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
+      });
+    }
   }
 
-  async softDeleteClient(req: Request, res: Response) {
+  static async softDeleteClient(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
     try {
       const { clientId } = req.params;
       const client = await clientService.softDeleteClient(clientId);
-
-      if ("error" in client) {
-        return res.status(HTTP_NOT_FOUND).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: client.error,
-        });
-      }
-
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
-        data: client,
         message: SUCCESS_MESSAGES.CLIENT_SOFT_DELETED,
+        data: client,
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
-        message:
-          error instanceof Error ? error.message : ERROR_MESSAGES.GENERAL_ERROR,
+        error: error.message,
       });
     }
   }
 
-  async restoreClient(req: Request, res: Response) {
+  static async restoreClient(req: Request, res: Response): Promise<Response> {
     try {
       const { clientId } = req.params;
       const client = await clientService.restoreClient(clientId);
-
-      if ("error" in client) {
-        return res.status(HTTP_NOT_FOUND).json({
-          status: RESPONSE_STATUS.ERROR,
-          message: client.error,
-        });
-      }
-
       return res.status(HTTP_OK).json({
-        status: RESPONSE_STATUS.SUCCESS,
-        data: client,
         message: SUCCESS_MESSAGES.CLIENT_RESTORED,
+        data: client,
       });
-    } catch (error) {
+    } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        status: RESPONSE_STATUS.ERROR,
-        message:
-          error instanceof Error ? error.message : ERROR_MESSAGES.GENERAL_ERROR,
+        error: error.message,
       });
     }
   }

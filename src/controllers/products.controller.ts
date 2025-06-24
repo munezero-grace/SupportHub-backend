@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ProductsService } from '../services/ProductsService';
+import { ProductsService } from '../services/products.service';
 import {
     HTTP_OK,
     HTTP_CREATED,
