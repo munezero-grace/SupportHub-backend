@@ -24,4 +24,9 @@ export const SUCCESS_MESSAGES = {
   USER_SETTINGS_UPDATED_SUCCESSFULLY: "Profile updated successfully",
   USER_COMPANY_UPDATED_SUCCESSFULLY: "Company updated successfully",
   TICKET_COUNT_RETRIEVED_SUCCESSFULLY: "Ticket counts retrieved successfully",
+  WEBHOOK_SAVED_SUCCESSFULLY: "Webhook saved successfully.",
+  SLACK_NOTIFICATION_ENABLED: "Slack notification enabled on status change.",
+  SLACK_NOTIFICATION_DISABLED: "Slack notification disabled on status change.",
+  NEW_TICKET_SLACK_NOTIFICATION_ENABLED: "Slack notification enabled on new ticket.",
+  NEW_TICKET_SLACK_NOTIFICATION_DISABLED: "Slack notification disabled on new ticket.",
 };

@@ -3,6 +3,8 @@ export interface SignupRequestBody {
   lastName: string;
   email: string;
   password: string;
+  companyName?: string;
+  companyDomain?: string;
 }
 
 export interface LoginRequestBody {
@@ -30,7 +32,8 @@ export interface AuthPayload {
   email: string;
   role: string;
   provider?: string;
-  providerId?: string;  client?: {
+  providerId?: string;
+  client?: {
     id: string;
     clientCode: string;
     companyName: string | null;

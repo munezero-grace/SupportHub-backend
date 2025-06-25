@@ -20,13 +20,12 @@ class UsersController {
       });
     }
   }
-
   static async getUserProfile(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id;
       return res.status(HTTP_OK).json({
         message: "User profile retrieved successfully",
-        data: await userService.getUserProfile(userId as string),
+        data: await userService.getUserProfile(userId as string)
       });
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
@@ -34,16 +33,11 @@ class UsersController {
       });
     }
   }
-  static async updateUserProfile(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+
+  static async updateUserProfile(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id!;
-      const updatedClient = await userService.updateUserProfile(
-        userId,
-        req.body
-      );
+      const updatedClient = await userService.updateUserProfile(userId, req.body);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.USER_SETTINGS_UPDATED_SUCCESSFULLY,
         data: updatedClient,
@@ -55,16 +49,10 @@ class UsersController {
     }
   }
 
-  static async updateUserCompanyProfile(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+  static async updateUserCompanyProfile(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id!;
-      const updatedCompany = await userService.updateUserCompanyProfile(
-        userId,
-        req.body
-      );
+      const updatedCompany = await userService.updateUserCompanyProfile(userId, req.body);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.USER_COMPANY_UPDATED_SUCCESSFULLY,
         data: updatedCompany,
@@ -72,6 +60,29 @@ class UsersController {
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
         error: error.message || ERROR_MESSAGES.USER_DELETE_FAILED,
+      });
+    }
+  }
+
+  static async softDeleteUser(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.params.id;
+      const result = await userService.softDeleteUser(userId);
+      if ('error' in result) {
+        return res.status(404).json({
+          status: 'error',
+          message: result.error,
+        });
+      }
+      return res.status(HTTP_OK).json({
+        status: 'success',
+        data: result,
+        message: SUCCESS_MESSAGES.CLIENT_DELETED,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: 'error',
+        message: error.message || 'Failed to soft delete user',
       });
     }
   }
