@@ -1,8 +1,7 @@
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid credentials.",
   USER_ALREADY_EXISTS: "User already exists.",
-  ACCOUNT_DEACTIVATED:
-    "Your account has been deactivated. Please contact support.",
+  ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please contact support.",
   ROLE_NOT_FOUND: "Role not found",
   ASSIGN_ROLE_ERROR: "Error assigning role.",
   SIGNUP_FAILED: "Signup failed.",
@@ -34,19 +33,16 @@ export const ERROR_MESSAGES = {
   UNEXPECTED_ERROR: "An unexpected error occurred.",
   USER_ID_REQUIRED: "User ID is required.",
   CLIENT_NOT_FOUND_FOR_USER: "Client not found for user.",
-  FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT:
-    "Failed to retrieve products for client.",
+  FAILED_TO_RETRIEVE_PRODUCTS_FOR_CLIENT: "Failed to retrieve products for client.",
   FAILED_TO_RETRIEVE_PRODUCTS: "Failed to retrieve products.",
   SLACK_NOTIFICATION_FAILED: "Slack notification failed.",
   CLIENT_DOES_NOT_EXIST: "Client with id {id} does not exist",
   PRODUCT_DOES_NOT_EXIST: "Product does not exist",
-  PRODUCT_NOT_ASSOCIATED_WITH_CLIENT:
-    "Product is not associated with this client",
+  PRODUCT_NOT_ASSOCIATED_WITH_CLIENT: "Product is not associated with this client",
   NO_CLIENT_ASSOCIATED_WITH_USER: "No client associated with this user",
   USER_DOES_NOT_EXIST: "User does not exist",
   UNAUTHORIZED: "Unauthorized",
-  FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE:
-    "Failed to retrieve products from database",
+  FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE: "Failed to retrieve products from database",
   FAILED_TO_ADD_CLIENT_TO_PRODUCT: "Failed to add client to product",
   FAILED_TO_CREATE_CLIENT: "Failed to create client",
   FAILED_TO_FETCH_CLIENTS: "Failed to fetch clients",
@@ -58,6 +54,9 @@ export const ERROR_MESSAGES = {
   FAILED_TO_RETRIEVE_TICKET: "Failed to retrieve ticket",
   FAILED_TO_UPDATE_TICKET: "Failed to update ticket",
   FAILED_TO_DELETE_TICKET: "Failed to delete ticket",
+  NO_VALID_FIELDS_TO_UPDATE: "No valid fields to update",
+  INVALID_PRIORITY: "Invalid priority",
+  INVALID_STATUS: "Invalid status",
   CLIENT_CODE_IS_REQUIRED: "Client code is required",
   CLIENT_ID_REQUIRED: "Client ID is required",
   CLIENT_PRODUCT_RELATION_NOT_FOUND: "Client is not linked to this product",
@@ -71,6 +70,7 @@ export const ERROR_MESSAGES = {
   FAILED_TO_FETCH_CLIENT_STATS: "Failed to fetch client statistics",
   FAILED_TO_FETCH_PRODUCT_STATS: "Failed to fetch product statistics",
   FAILED_TO_FETCH_DASHBOARD_DATA: "Failed to fetch dashboard data",
+  NOT_AUTHORIZED: "You are not authorized to view this ticket"
 };
 
 export const RESPONSE_STATUS = {
