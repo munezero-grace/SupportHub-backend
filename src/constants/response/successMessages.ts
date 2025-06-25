@@ -20,7 +20,7 @@ export const SUCCESS_MESSAGES = {
   CLIENT_SOFT_DELETED: "Client has been successfully deactivated",
   CLIENT_RESTORED: "Client has been successfully restored",
   USERS_RETRIEVED_SUCCESSFULLY: "Users retrieved successfully",
-  USER_SETTINGS_UPDATED_SUCCESSFULLY: "User settings updated successfully",
   USER_SETTINGS_RETRIEVED_SUCCESSFULLY: "User settings retrieved successfully",
+  USER_SETTINGS_UPDATED_SUCCESSFULLY: "Profile updated successfully",
+  USER_COMPANY_UPDATED_SUCCESSFULLY: "Company updated successfully",
 };
-

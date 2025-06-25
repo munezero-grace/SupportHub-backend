@@ -8,78 +8,88 @@ import {
 import { WrapAsync } from "../middlewares/wrapAsync";
 import { requireRole } from "../middlewares/requireRole";
 import { authenticateUser } from "../middlewares/authenticateUser";
+import { validateClientId } from "../middlewares/validateClientId";
 
 const router = Router();
-const clientController = new ClientController();
 
-router
-  .route("/")
-  .get(WrapAsync(authenticateUser), WrapAsync(clientController.getAllClients))
-  .post(
-    WrapAsync(authenticateUser),
-    WrapAsync(requireRole("super_admin")),
-    validateRequest(createClientSchema),
-    WrapAsync(clientController.createClient)
-  );
-
-router.patch(
-  "/:clientId/soft-delete",
+router.get(
+  "/",
   WrapAsync(authenticateUser),
-  WrapAsync(requireRole("super_admin")),
-  WrapAsync(clientController.softDeleteClient)
+  WrapAsync(ClientController.getAllClients)
 );
-
 router.post(
-  "/:clientId/restore",
+  "/",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
-  WrapAsync(clientController.restoreClient)
-);
-
-router.get(
-  "/users/:userId",
-  WrapAsync(authenticateUser),
-  WrapAsync(clientController.getClientByUserId)
+  validateRequest(createClientSchema),
+  WrapAsync(ClientController.createClient)
 );
 router.get(
-  "/:clientId/products",
+  "/users/me",
   WrapAsync(authenticateUser),
-  WrapAsync(clientController.getProductsForClient)
+  WrapAsync(ClientController.getClientByUserId)
 );
-
-router
-  .route("/:clientId/products/:productId")
-  .post(
-    WrapAsync(authenticateUser),
-    WrapAsync(requireRole("super_admin")),
-    WrapAsync(clientController.addProductToClient)
-  )
-  .delete(
-    WrapAsync(authenticateUser),
-    WrapAsync(requireRole("super_admin")),
-    WrapAsync(clientController.removeProductFromClient)
-  );
-
-router
-  .route("/:clientId")
-  .get(WrapAsync(authenticateUser), WrapAsync(clientController.getClientById))
-  .patch(
-    WrapAsync(authenticateUser),
-    WrapAsync(requireRole("super_admin")),
-    validateRequest(updateClientSchema),
-    WrapAsync(clientController.updateClient)
-  )
-  .delete(
-    WrapAsync(authenticateUser),
-    WrapAsync(requireRole("super_admin")),
-    WrapAsync(clientController.deleteClient)
-  );
-
+router.get(
+  "/:clientId",
+  WrapAsync(authenticateUser),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.getClientById)
+);
+router.patch(
+  "/:clientId",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  validateRequest(updateClientSchema),
+  WrapAsync(ClientController.updateClient)
+);
+router.delete(
+  "/:clientId",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.deleteClient)
+);
 router.patch(
   "/:clientId/status",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
-  WrapAsync(clientController.updateClientStatus)
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.updateClientStatus)
+);
+router.patch(
+  "/:clientId/soft-delete",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.softDeleteClient)
+);
+router.post(
+  "/:clientId/restore",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.restoreClient)
+);
+router.get(
+  "/:clientId/products",
+  WrapAsync(authenticateUser),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.getProductsForClient)
+);
+router.post(
+  "/:clientId/products/:productId",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.addProductToClient)
+);
+router.delete(
+  "/:clientId/products/:productId",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(validateClientId),
+  WrapAsync(ClientController.removeProductFromClient)
 );
 
 export default router;

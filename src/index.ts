@@ -11,7 +11,6 @@ import productRoutes from "./routes/productRoutes";
 import { setupSwagger } from "./documentations/swagger-docs";
 import ticketsRoutes from "./routes/ticketsRoutes";
 import userRoutes from "./routes/userRoutes";
-import { authenticateUser } from "./middlewares/authenticateUser";
 import dashboardRoutes from "./routes/dashboardRoutes";
 dotenv.config();
 
@@ -45,8 +44,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/tickets", ticketsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
-app.use("/api", authenticateUser, userRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({

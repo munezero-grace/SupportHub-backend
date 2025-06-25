@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { UserService } from '../services/user.service';
-import { HTTP_OK, HTTP_BAD_REQUEST } from '../constants/httpStatusCodes';
-import { ERROR_MESSAGES } from '../constants/response/errors';
-import { SUCCESS_MESSAGES } from '../constants/response/successMessages';
+import { Request, Response } from "express";
+import { UserService } from "../services/user.service";
+import { HTTP_OK, HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
+import { ERROR_MESSAGES } from "../constants/response/errors";
+import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
 
 const userService = new UserService();
 
@@ -21,21 +21,29 @@ class UsersController {
     }
   }
 
-  static async updateUserSettings(req: Request, res: Response): Promise<Response> {
+  static async getUserProfile(req: Request, res: Response): Promise<Response> {
     try {
-      const userRole = req.user?.role;
-      const { companyName, companyDomain, firstName, lastName } = req.body;
-      if (userRole !== 'super_admin' && !companyName) {
-        return res.status(HTTP_BAD_REQUEST).json({ error: ERROR_MESSAGES.COMPANY_NAME_REQUIRED });
-      }
-      if (userRole === 'super_admin') {
-        return res.status(HTTP_OK).json({
-          message: SUCCESS_MESSAGES.USER_SETTINGS_UPDATED_SUCCESSFULLY,
-          data: null,
-        });
-      }
+      const userId = req.user?.id;
+      return res.status(HTTP_OK).json({
+        message: "User profile retrieved successfully",
+        data: await userService.getUserProfile(userId as string),
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message,
+      });
+    }
+  }
+  static async updateUserProfile(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
       const userId = req.user?.id!;
-      const updatedClient = await userService.updateUserSettings(userId, companyName, companyDomain, firstName, lastName);
+      const updatedClient = await userService.updateUserProfile(
+        userId,
+        req.body
+      );
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.USER_SETTINGS_UPDATED_SUCCESSFULLY,
         data: updatedClient,
@@ -47,17 +55,23 @@ class UsersController {
     }
   }
 
-  static async getUserSettings(req: Request, res: Response): Promise<Response> {
+  static async updateUserCompanyProfile(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
     try {
       const userId = req.user?.id!;
-      const clientSettings = await userService.getUserSettings(userId);
+      const updatedCompany = await userService.updateUserCompanyProfile(
+        userId,
+        req.body
+      );
       return res.status(HTTP_OK).json({
-        message: SUCCESS_MESSAGES.USER_SETTINGS_RETRIEVED_SUCCESSFULLY,
-        data: clientSettings,
+        message: SUCCESS_MESSAGES.USER_COMPANY_UPDATED_SUCCESSFULLY,
+        data: updatedCompany,
       });
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
-        error: error.message || 'Failed to retrieve user settings',
+        error: error.message || ERROR_MESSAGES.USER_DELETE_FAILED,
       });
     }
   }
