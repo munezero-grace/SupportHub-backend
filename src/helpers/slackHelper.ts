@@ -9,3 +9,12 @@ export function buildSlackTicketMessage(ticketResult: SlackTicket, product: Slac
     `Created by: ${userName}`,
   ].filter(Boolean).join("\n");
 }
+
+export function buildSlackStatusChangeMessage(ticketTitle: string, ticketCode: string, oldStatus: string, newStatus: string, updatedBy: string): string {
+  return [
+    "*Ticket status updated:*",
+    `${ticketTitle}(${ticketCode})`,
+    `Status from *${oldStatus}* to *${newStatus}*`,
+    `Updated by: ${updatedBy}`,
+  ].join("\n");
+}
