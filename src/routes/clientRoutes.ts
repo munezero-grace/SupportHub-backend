@@ -30,13 +30,13 @@ router.get(
   WrapAsync(ClientController.getClientByUserId)
 );
 router.get(
-  "/:clientId",
+  "/:id",
   WrapAsync(authenticateUser),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.getClientById)
 );
 router.patch(
-  "/:clientId",
+  "/:id",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
@@ -44,48 +44,48 @@ router.patch(
   WrapAsync(ClientController.updateClient)
 );
 router.delete(
-  "/:clientId",
+  "/:id",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.deleteClient)
 );
 router.patch(
-  "/:clientId/status",
+  "/:id/status",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.updateClientStatus)
 );
 router.patch(
-  "/:clientId/soft-delete",
+  "/:id/soft-delete",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.softDeleteClient)
 );
 router.post(
-  "/:clientId/restore",
+  "/:id/restore",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.restoreClient)
 );
 router.get(
-  "/:clientId/products",
+  "/:id/products",
   WrapAsync(authenticateUser),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.getProductsForClient)
 );
 router.post(
-  "/:clientId/products/:productId",
+  "/:id/products/:productId",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),
   WrapAsync(ClientController.addProductToClient)
 );
 router.delete(
-  "/:clientId/products/:productId",
+  "/:id/products/:productId",
   WrapAsync(authenticateUser),
   WrapAsync(requireRole("super_admin")),
   WrapAsync(validateClientId),

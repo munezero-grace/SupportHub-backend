@@ -7,7 +7,8 @@ import { CreateTicketData } from '../types/ticket';
 import { buildTicketData } from '../utils/ticketData';
 import { ticketIncludes, ticketListIncludes } from '../utils/ticketPrismaIncludes';
 import { uploadTicketFiles } from '../helpers/ticketFileHelper';
-import { buildSlackTicketMessage } from '../helpers/slackHelper';
+import { buildSlackTicketMessage, buildSlackStatusChangeMessage } from '../helpers/slackHelper';
+import SettingsService from './settings.service';
 import { throwIfTicketNotFound, throwIfNotAuthorized } from '../helpers/ErrorHandling';
 
 const prisma = new PrismaClient();
@@ -191,6 +192,11 @@ export class TicketsService {
       if (!userExists) {
         return { error: ERROR_MESSAGES.USER_DOES_NOT_EXIST };
       }
+      const slackSettings = await SettingsService.getSlackSettings(userId);
+              if (!slackSettings || !slackSettings.newTickets) {
+    
+                return { error: ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED };
+              }
       const userRole = await getUserRole(userId);
       const isAdmin = userRole?.includes("admin") || userRole?.includes("super_admin");
       let imageUrls: string[] = await uploadTicketFiles(files);
@@ -219,7 +225,7 @@ export class TicketsService {
           product ? product : {},
           userName
         );
-        await sendSlackNotification(slackMessage);
+      await sendSlackNotification(slackMessage, userId);
       } catch { }
       return { data: ticketResult };
     } catch (error: any) {
@@ -304,7 +310,43 @@ export class TicketsService {
         return { error: ERROR_MESSAGES.NO_VALID_FIELDS_TO_UPDATE, status: 400 };
       }
       try {
+       
+        const oldTicket = await TicketsService.getTicketById(id);
         const ticket = await TicketsService.updateTicket(id, updateData);
+      
+        if ('status' in body) {
+          try {
+            const userId = user?.id;
+            if (userId) {
+              const slackSettings = await SettingsService.getSlackSettings(userId);
+              if (!slackSettings || !slackSettings.statusChanges) {
+             
+                return { error: ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED };
+              }
+              const userService = new (require("../services/user.service").UserService)();
+              const userDetails = await userService.getUserById(userId);
+              const userName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Unknown";
+              const oldStatus = oldTicket ? oldTicket.status : "Unknown";
+              const newStatus = body.status;
+             
+              const fullTicket = await TicketsService.getTicketById(id);
+              if (!fullTicket) {
+                throw new Error(ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET);
+              } else {
+                const slackMessage = buildSlackStatusChangeMessage(
+                  fullTicket.title || "Unknown",
+                  fullTicket.ticketCode || "Unknown",
+                  oldStatus,
+                  newStatus,
+                  userName
+                );
+                await sendSlackNotification(slackMessage, userId);
+              }
+            }
+          } catch (error) {
+            throw new Error(ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED);
+          }
+        }
         return { data: ticket };
       } catch (error: any) {
         if (

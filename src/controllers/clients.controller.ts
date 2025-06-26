@@ -64,8 +64,8 @@ export class ClientController {
 
   static async getClientById(req: Request, res: Response): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      const client = await clientService.findClientByIdField(clientId);
+      const { id } = req.params;
+      const client = await clientService.findClientByIdField(id);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENTS_RETRIEVED,
         data: client,
@@ -79,8 +79,8 @@ export class ClientController {
 
   static async updateClient(req: Request, res: Response): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      const client = await clientService.updateClient(clientId, req.body);
+      const { id } = req.params;
+      const client = await clientService.updateClient(id, req.body);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENT_UPDATED,
         data: client,
@@ -94,8 +94,8 @@ export class ClientController {
 
   static async deleteClient(req: Request, res: Response): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      await clientService.deleteClient(clientId);
+      const { id } = req.params;
+      await clientService.deleteClient(id);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENT_DELETED,
       });
@@ -111,9 +111,9 @@ export class ClientController {
     res: Response
   ): Promise<Response> {
     try {
-      const { clientId } = req.params;
+      const { id } = req.params;
       const { status } = req.body;
-      const client = await clientService.updateClientStatus(clientId, status);
+      const client = await clientService.updateClientStatus(id, status);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENT_UPDATED,
         data: client,
@@ -130,8 +130,8 @@ export class ClientController {
     res: Response
   ): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      const products = await clientService.getProductsForClient(clientId);
+      const { id } = req.params;
+      const products = await clientService.getProductsForClient(id);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.PRODUCTS_RETRIEVED,
         data: { products },
@@ -148,9 +148,9 @@ export class ClientController {
     res: Response
   ): Promise<Response> {
     try {
-      const { clientId, productId } = req.params;
+      const { id, productId } = req.params;
       const clientProduct = await clientService.addProductToClient(
-        clientId,
+        id,
         productId
       );
       return res.status(HTTP_CREATED).json({
@@ -169,8 +169,8 @@ export class ClientController {
     res: Response
   ): Promise<Response> {
     try {
-      const { clientId, productId } = req.params;
-      await clientService.removeProductFromClient(clientId, productId);
+      const { id, productId } = req.params;
+      await clientService.removeProductFromClient(id, productId);
       return res.status(HTTP_NO_CONTENT).send();
     } catch (error: any) {
       return res.status(HTTP_BAD_REQUEST).json({
@@ -184,8 +184,8 @@ export class ClientController {
     res: Response
   ): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      const client = await clientService.softDeleteClient(clientId);
+      const { id } = req.params;
+      const client = await clientService.softDeleteClient(id);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENT_SOFT_DELETED,
         data: client,
@@ -199,8 +199,8 @@ export class ClientController {
 
   static async restoreClient(req: Request, res: Response): Promise<Response> {
     try {
-      const { clientId } = req.params;
-      const client = await clientService.restoreClient(clientId);
+      const { id } = req.params;
+      const client = await clientService.restoreClient(id);
       return res.status(HTTP_OK).json({
         message: SUCCESS_MESSAGES.CLIENT_RESTORED,
         data: client,
