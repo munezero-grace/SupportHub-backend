@@ -8,8 +8,7 @@ export async function validateClientId(
   res: Response,
   next: NextFunction
 ) {
-  const clientId =
-    req.params.clientId || req.body.clientId || req.query.clientId;
+  const clientId = req.params.id || req.body.clientId || req.query.clientId;
 
   if (!clientId) {
     return res.status(400).json({
@@ -19,7 +18,7 @@ export async function validateClientId(
 
   if (!isUuid(clientId)) {
     return res.status(400).json({
-      error: ERROR_MESSAGES.INVALID_CLIENT_ID || "Invalid client ID format",
+      error: ERROR_MESSAGES.INVALID_CLIENT_ID,
     });
   }
   const client = await getClientById(clientId, true);
