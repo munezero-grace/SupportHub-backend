@@ -1,51 +1,94 @@
 import { PrismaClient, StatusEnum, PriorityEnum } from "@prisma/client";
 import { ClientService } from "./client.service";
 import { ERROR_MESSAGES } from "../constants/response/errors";
-import { sendSlackNotification } from '../utils/slackNotifier';
-import { getUserRole } from '../helpers/getUserRole';
-import { CreateTicketData } from '../types/ticket';
-import { buildTicketData } from '../utils/ticketData';
-import { ticketIncludes, ticketListIncludes } from '../utils/ticketPrismaIncludes';
-import { uploadTicketFiles } from '../helpers/ticketFileHelper';
-import { buildSlackTicketMessage, buildSlackStatusChangeMessage } from '../helpers/slackHelper';
-import SettingsService from './settings.service';
-import { throwIfTicketNotFound, throwIfNotAuthorized } from '../helpers/ErrorHandling';
+import { sendSlackNotification } from "../utils/slackNotifier";
+import { getUserRole } from "../helpers/getUserRole";
+import { CreateTicketData } from "../types/ticket";
+import { buildTicketData } from "../utils/ticketData";
+import {
+  ticketIncludes,
+  ticketListIncludes,
+} from "../utils/ticketPrismaIncludes";
+import { uploadTicketFiles } from "../helpers/ticketFileHelper";
+import {
+  buildSlackTicketMessage,
+  buildSlackStatusChangeMessage,
+} from "../helpers/slackHelper";
+import SettingsService from "./settings.service";
+import {
+  throwIfTicketNotFound,
+  throwIfNotAuthorized,
+} from "../helpers/ErrorHandling";
 
 const prisma = new PrismaClient();
 const clientService = new ClientService();
 
 function parseTags(tags: string | string[] | undefined): string[] | undefined {
   if (!tags) return undefined;
-  if (Array.isArray(tags)) return tags.map(tag => tag.trim()).filter(Boolean);
-  return tags.split(',').map(tag => tag.trim()).filter(Boolean);
+  if (Array.isArray(tags)) return tags.map((tag) => tag.trim()).filter(Boolean);
+  return tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 export class TicketsService {
   private static async getNextTicketCode(): Promise<string> {
-    const lastTicket = await prisma.tickets.findFirst({ orderBy: { ticketCode: "desc" } });
+    const lastTicket = await prisma.tickets.findFirst({
+      orderBy: { ticketCode: "desc" },
+    });
     if (!lastTicket) return "T-1001";
     const lastCodeNumber = parseInt(lastTicket.ticketCode.split("-")[1]);
     return `T-${lastCodeNumber + 1}`;
   }
 
-  static async createTicket(userId: string, ticketData: CreateTicketData & { imageUrls?: string[] }) {
-    const { title, priority, imageUrls, clientId, productId, product, tags, dueDate, internalNotes, description } = ticketData;
+  static async createTicket(
+    userId: string,
+    ticketData: CreateTicketData & { imageUrls?: string[] }
+  ) {
+    const {
+      title,
+      priority,
+      imageUrls,
+      clientId,
+      productId,
+      product,
+      tags,
+      dueDate,
+      internalNotes,
+      description,
+    } = ticketData;
     const userClient = await clientService.findClientByUserId(userId);
     let finalClientId = clientId;
-    if (!clientId && userClient && "id" in userClient) finalClientId = userClient.id;
+    if (!clientId && userClient && "id" in userClient)
+      finalClientId = userClient.id;
     if (clientId) {
       const clientExists = await clientService.findClientByIdField(clientId);
-      if (!clientExists) return { error: ERROR_MESSAGES.CLIENT_DOES_NOT_EXIST.replace("{id}", clientId) };
+      if (!clientExists)
+        return {
+          error: ERROR_MESSAGES.CLIENT_DOES_NOT_EXIST.replace("{id}", clientId),
+        };
     } else if (!userClient) {
       return { error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER };
     }
     const finalProductId = productId || product;
     if (finalProductId) {
-      const productExists = await prisma.products.findUnique({ where: { id: finalProductId } });
-      if (!productExists) return { error: ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST };
+      const productExists = await prisma.products.findUnique({
+        where: { id: finalProductId },
+      });
+      if (!productExists)
+        return { error: ERROR_MESSAGES.PRODUCT_DOES_NOT_EXIST };
       if (finalClientId) {
-        const clientProduct = await prisma.clientProduct.findUnique({ where: { clientId_productId: { clientId: finalClientId, productId: finalProductId } } });
-        if (!clientProduct) return { error: ERROR_MESSAGES.PRODUCT_NOT_ASSOCIATED_WITH_CLIENT };
+        const clientProduct = await prisma.clientProduct.findUnique({
+          where: {
+            clientId_productId: {
+              clientId: finalClientId,
+              productId: finalProductId,
+            },
+          },
+        });
+        if (!clientProduct)
+          return { error: ERROR_MESSAGES.PRODUCT_NOT_ASSOCIATED_WITH_CLIENT };
       }
     }
     const ticketCode = await TicketsService.getNextTicketCode();
@@ -57,21 +100,25 @@ export class TicketsService {
       imageUrls,
       description,
       internalNotes,
-      tags: undefined, 
+      tags: undefined,
       dueDate,
       userId,
       finalClientId,
-      finalProductId
+      finalProductId,
     });
-    const ticket = await prisma.tickets.create({ data: { ...data, tags: tagsArray } });
+    const ticket = await prisma.tickets.create({
+      data: { ...data, tags: tagsArray },
+    });
     if (imageUrls && imageUrls.length > 0) {
       for (const url of imageUrls) {
-        await prisma.ticketAttachment.create({ data: { ticketId: ticket.id, fileUrl: url } });
+        await prisma.ticketAttachment.create({
+          data: { ticketId: ticket.id, fileUrl: url },
+        });
       }
     }
     return prisma.tickets.findUnique({
       where: { id: ticket.id },
-      include: ticketIncludes
+      include: ticketIncludes,
     });
   }
 
@@ -88,13 +135,10 @@ export class TicketsService {
         where: isAdmin
           ? {}
           : {
-            OR: [
-              { createdBy: userId },
-              { client: { userId: userId } },
-            ],
-          },
+              OR: [{ createdBy: userId }, { client: { userId: userId } }],
+            },
         orderBy: [{ createdAt: "desc" }],
-        include: ticketListIncludes
+        include: ticketListIncludes,
       });
     } catch (error) {
       throw error;
@@ -102,23 +146,26 @@ export class TicketsService {
   }
 
   static async getUserTicketsWithOptions(queryOptions: any) {
-    return await prisma.tickets.findMany({ ...queryOptions, include: ticketListIncludes });
+    return await prisma.tickets.findMany({
+      ...queryOptions,
+      include: ticketListIncludes,
+    });
   }
 
   static async getTicketById(id: string) {
     return await prisma.tickets.findUnique({
       where: { id },
-      include: ticketIncludes
+      include: ticketIncludes,
     });
   }
 
   static async getTicketByCode(ticketCode: string) {
     const ticket = await prisma.tickets.findUnique({
       where: { ticketCode },
-      include: ticketIncludes
+      include: ticketIncludes,
     });
     if (!ticket) {
-      const { ErrorHandling } = await import('../helpers/ErrorHandling');
+      const { ErrorHandling } = await import("../helpers/ErrorHandling");
       throw new ErrorHandling(ERROR_MESSAGES.TICKET_NOT_FOUND, 404);
     }
     return ticket;
@@ -140,7 +187,7 @@ export class TicketsService {
   static async getAllTickets() {
     return await prisma.tickets.findMany({
       orderBy: [{ createdAt: "desc" }],
-      include: ticketListIncludes
+      include: ticketListIncludes,
     });
   }
 
@@ -186,47 +233,70 @@ export class TicketsService {
     };
   }
 
-  static async createTicketWithUploadsAndNotify(userId: string, body: any, files: any) {
+  static async createTicketWithUploadsAndNotify(
+    userId: string,
+    body: any,
+    files: any
+  ) {
     try {
       const userExists = await TicketsService.checkUserExists(userId);
       if (!userExists) {
         return { error: ERROR_MESSAGES.USER_DOES_NOT_EXIST };
       }
-      const slackSettings = await SettingsService.getSlackSettings(userId);
-              if (!slackSettings || !slackSettings.newTickets) {
-    
-                return { error: ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED };
-              }
+
       const userRole = await getUserRole(userId);
-      const isAdmin = userRole?.includes("admin") || userRole?.includes("super_admin");
+      const isAdmin =
+        userRole?.includes("admin") || userRole?.includes("super_admin");
       let imageUrls: string[] = await uploadTicketFiles(files);
       let ticketData;
       if (isAdmin) {
         ticketData = { ...body, imageUrls };
       } else {
-        const client = await (new ClientService()).findClientByUserId(userId);
+        const client = await new ClientService().findClientByUserId(userId);
         if (!client || "error" in client) {
           return { error: ERROR_MESSAGES.NO_CLIENT_ASSOCIATED_WITH_USER };
         }
         ticketData = { ...body, imageUrls, clientId: client.id };
       }
-      const ticketResult = await TicketsService.createTicket(userId, ticketData);
+      const ticketResult = await TicketsService.createTicket(
+        userId,
+        ticketData
+      );
       if (!ticketResult || "error" in ticketResult) {
         return { error: ticketResult?.error };
       }
+
+      // Send Slack notification (non-blocking - don't fail if it errors)
       try {
-        const user = await (new (require("../services/user.service").UserService)()).getUserById(userId);
-        const userName = user ? `${user.firstName} ${user.lastName}` : "Unknown";
-        const product = ticketResult.productId
-          ? await prisma.products.findUnique({ where: { id: ticketResult.productId } })
-          : null;
-        const slackMessage = buildSlackTicketMessage(
-          { ...ticketResult, description: ticketResult.description ?? undefined },
-          product ? product : {},
-          userName
-        );
-      await sendSlackNotification(slackMessage, userId);
-      } catch { }
+        const slackSettings = await SettingsService.getSlackSettings(userId);
+        if (slackSettings && slackSettings.newTickets) {
+          const user =
+            await new (require("../services/user.service").UserService)().getUserById(
+              userId
+            );
+          const userName = user
+            ? `${user.firstName} ${user.lastName}`
+            : "Unknown";
+          const product = ticketResult.productId
+            ? await prisma.products.findUnique({
+                where: { id: ticketResult.productId },
+              })
+            : null;
+          const slackMessage = buildSlackTicketMessage(
+            {
+              ...ticketResult,
+              description: ticketResult.description ?? undefined,
+            },
+            product ? product : {},
+            userName
+          );
+          await sendSlackNotification(slackMessage, userId);
+        }
+      } catch (slackError) {
+        // Log error but don't fail the ticket creation
+        console.error("Slack notification error:", slackError);
+      }
+
       return { data: ticketResult };
     } catch (error: any) {
       return { error: error.message };
@@ -243,15 +313,30 @@ export class TicketsService {
     const queryOptions = {
       orderBy: [{ createdAt: "desc" }],
       include: {
-        client: { select: { id: true, companyName: true, clientCode: true, status: true } },
+        client: {
+          select: {
+            id: true,
+            companyName: true,
+            clientCode: true,
+            status: true,
+          },
+        },
         owner: { select: { firstName: true, lastName: true, email: true } },
-        product: { select: { id: true, name: true, productCode: true, status: true, updatedAt: true } }
+        product: {
+          select: {
+            id: true,
+            name: true,
+            productCode: true,
+            status: true,
+            updatedAt: true,
+          },
+        },
       },
     };
     const whereCondition: any = {};
     if (!isAdmin) {
       try {
-        const client = await (new ClientService()).findClientByUserId(userId);
+        const client = await new ClientService().findClientByUserId(userId);
         if (!client || "error" in client) {
           whereCondition.OR = [{ createdBy: userId }];
         } else {
@@ -269,7 +354,8 @@ export class TicketsService {
 
   static async getAllTicketsControllerLogic(userId: string) {
     const userRole = await getUserRole(userId);
-    const isAdmin = userRole?.includes("admin") || userRole?.includes("super_admin");
+    const isAdmin =
+      userRole?.includes("admin") || userRole?.includes("super_admin");
     if (!isAdmin) {
       return { error: ERROR_MESSAGES.UNAUTHORIZED };
     }
@@ -279,7 +365,8 @@ export class TicketsService {
 
   static async getTicketsCountsControllerLogic(userId: string) {
     const userRole = await getUserRole(userId);
-    const isAdmin = userRole?.includes("admin") || userRole?.includes("super_admin");
+    const isAdmin =
+      userRole?.includes("admin") || userRole?.includes("super_admin");
     if (!isAdmin) {
       return { error: ERROR_MESSAGES.UNAUTHORIZED };
     }
@@ -289,20 +376,30 @@ export class TicketsService {
 
   static async updateTicketWithValidation(user: any, id: string, body: any) {
     try {
-      if (user && (user.role === 'client' || user.role === 'user')) {
+      if (user && (user.role === "client" || user.role === "user")) {
         return { error: ERROR_MESSAGES.UNAUTHORIZED, status: 403 };
       }
       const { status, priority } = body;
       const updateData: any = {};
-      if ('status' in body) {
+      if ("status" in body) {
         if (!Object.values(StatusEnum).includes(status)) {
-          return { error: `${ERROR_MESSAGES.INVALID_STATUS}: ${Object.values(StatusEnum).join(', ')}`, status: 400 };
+          return {
+            error: `${ERROR_MESSAGES.INVALID_STATUS}: ${Object.values(
+              StatusEnum
+            ).join(", ")}`,
+            status: 400,
+          };
         }
         updateData.status = status;
       }
-      if ('priority' in body) {
+      if ("priority" in body) {
         if (!Object.values(PriorityEnum).includes(priority)) {
-          return { error: `${ERROR_MESSAGES.INVALID_PRIORITY}: ${Object.values(PriorityEnum).join(', ')}`, status: 400 };
+          return {
+            error: `${ERROR_MESSAGES.INVALID_PRIORITY}: ${Object.values(
+              PriorityEnum
+            ).join(", ")}`,
+            status: 400,
+          };
         }
         updateData.priority = priority;
       }
@@ -310,25 +407,28 @@ export class TicketsService {
         return { error: ERROR_MESSAGES.NO_VALID_FIELDS_TO_UPDATE, status: 400 };
       }
       try {
-       
         const oldTicket = await TicketsService.getTicketById(id);
         const ticket = await TicketsService.updateTicket(id, updateData);
-      
-        if ('status' in body) {
+
+        if ("status" in body) {
           try {
             const userId = user?.id;
             if (userId) {
-              const slackSettings = await SettingsService.getSlackSettings(userId);
+              const slackSettings = await SettingsService.getSlackSettings(
+                userId
+              );
               if (!slackSettings || !slackSettings.statusChanges) {
-             
                 return { error: ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED };
               }
-              const userService = new (require("../services/user.service").UserService)();
+              const userService =
+                new (require("../services/user.service").UserService)();
               const userDetails = await userService.getUserById(userId);
-              const userName = userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Unknown";
+              const userName = userDetails
+                ? `${userDetails.firstName} ${userDetails.lastName}`
+                : "Unknown";
               const oldStatus = oldTicket ? oldTicket.status : "Unknown";
               const newStatus = body.status;
-             
+
               const fullTicket = await TicketsService.getTicketById(id);
               if (!fullTicket) {
                 throw new Error(ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET);
@@ -361,7 +461,10 @@ export class TicketsService {
         }
       }
     } catch (error: any) {
-      return { error: error.message || ERROR_MESSAGES.FAILED_TO_UPDATE_TICKET, status: 400 };
+      return {
+        error: error.message || ERROR_MESSAGES.FAILED_TO_UPDATE_TICKET,
+        status: 400,
+      };
     }
   }
 

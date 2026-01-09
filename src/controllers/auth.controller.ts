@@ -37,6 +37,7 @@ class AuthController {
       role: UserRole.CLIENT,
     });
     return res.status(HTTP_CREATED).json({
+      user,
       token,
       message: SUCCESS_MESSAGES.USER_REGISTERED,
     });
@@ -118,6 +119,7 @@ class AuthController {
     }
 
     const responsePayload = {
+      user: findUser,
       token,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
