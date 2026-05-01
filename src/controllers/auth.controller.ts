@@ -50,6 +50,7 @@ class AuthController {
       select: {
         ...userSelectFields,
         password: true,
+        hasChangedPassword: true,
         Clients: {
           select: {
             id: true,
@@ -121,10 +122,59 @@ class AuthController {
     const responsePayload = {
       user: findUser,
       token,
+      hasChangedPassword: findUser.hasChangedPassword,
       message: SUCCESS_MESSAGES.LOGIN_SUCCESS,
     };
     res.status(HTTP_OK).json(responsePayload);
     return;
+  };
+
+  public changePassword = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id as string;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: "Current password and new password are required"
+        });
+      }
+
+      const user = await prisma.users.findUnique({ where: { id: userId } });
+      
+      if (!user || !user.password) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: "User not found or password not set"
+        });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          message: "Current password is incorrect"
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+          hasChangedPassword: true
+        },
+        select: userSelectFields
+      });
+
+      return res.status(HTTP_OK).json({
+        message: "Password changed successfully",
+        user: updatedUser
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message
+      });
+    }
   };
 
   public googleSignIn = async (req: Request, res: Response) => {

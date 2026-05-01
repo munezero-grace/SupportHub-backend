@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { ERROR_MESSAGES } from "../constants/response/errors";
-import { validate as isUuid } from "uuid";
 import { getClientById } from "../helpers/clientHelpers";
 
 export async function validateClientId(
@@ -16,6 +15,7 @@ export async function validateClientId(
     });
   }
 
+  const { validate: isUuid } = await import("uuid");
   if (!isUuid(clientId)) {
     return res.status(400).json({
       error: ERROR_MESSAGES.INVALID_CLIENT_ID,

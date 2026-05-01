@@ -50,7 +50,7 @@ app.use("/api/settings",  settingsRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({
-    message: "BP Ticket Backend API is running!",
+    message: "Support Hub Backend API is running!",
   });
 });
 

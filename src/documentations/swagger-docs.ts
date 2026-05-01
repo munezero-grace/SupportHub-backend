@@ -2,10 +2,17 @@ import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
 import j2s from "joi-to-swagger";
 import Joi from "joi";
-import { signupValidation, loginValidation, googleValidation } from "../validations/auth.validation";
+import {
+  signupValidation,
+  loginValidation,
+  googleValidation,
+} from "../validations/auth.validation";
 
 const slackSettingsValidation = Joi.object({
-  slackWebhookUrl: Joi.string().uri().allow("").description("Slack webhook URL"),
+  slackWebhookUrl: Joi.string()
+    .uri()
+    .allow("")
+    .description("Slack webhook URL"),
   newTickets: Joi.boolean().description("Notify on new tickets"),
   ticketAssignments: Joi.boolean().description("Notify on ticket assignments"),
   statusChanges: Joi.boolean().description("Notify on status changes"),
@@ -14,9 +21,9 @@ const slackSettingsValidation = Joi.object({
 const swaggerDocument = {
   openapi: "3.0.0",
   info: {
-    title: "BP Ticket Internship Backend API",
+    title: "Support Hub Internship Backend API",
     version: "1.0.0",
-    description: "API documentation for BP Ticket Internship Backend",
+    description: "API documentation for Support Hub Internship Backend",
   },
   components: {
     securitySchemes: {
