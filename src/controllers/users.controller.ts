@@ -64,6 +64,15 @@ class UsersController {
     }
   }
 
+  static async getTeamMembers(_req: Request, res: Response): Promise<Response> {
+    try {
+      const members = await userService.getTeamMembers();
+      return res.status(HTTP_OK).json({ data: members });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message });
+    }
+  }
+
   static async reactivateUser(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.params.id;

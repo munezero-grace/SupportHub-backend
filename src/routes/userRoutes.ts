@@ -13,6 +13,12 @@ router.get(
   WrapAsync(UsersController.getAllUsers)
 );
 router.get(
+  "/team",
+  WrapAsync(authenticateUser),
+  WrapAsync(UsersController.getTeamMembers)
+);
+
+router.get(
   "/profile",
   WrapAsync(authenticateUser),
   WrapAsync(UsersController.getUserProfile)

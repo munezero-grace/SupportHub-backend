@@ -126,6 +126,35 @@ export class UserService {
     }));
   }
 
+  async getTeamMembers() {
+    const users = await prisma.users.findMany({
+      where: {
+        deletedAt: null,
+        userRoles: {
+          some: {
+            role: { name: { in: ["developer", "ticket_manager"] } },
+          },
+        },
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        userRoles: {
+          select: { role: { select: { name: true } } },
+        },
+      },
+    });
+    return users.map((u) => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      roles: u.userRoles.map((ur) => ur.role.name),
+    }));
+  }
+
   async reactivateUser(userId: string) {
     try {
       const user = await prisma.users.findUnique({ where: { id: userId } });
