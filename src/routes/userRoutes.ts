@@ -34,9 +34,4 @@ router.delete(
   WrapAsync(UsersController.softDeleteUser)
 );
 
-router.put(
-  "/profile/company",
-  WrapAsync(authenticateUser),
-  WrapAsync(UsersController.updateUserCompanyProfile)
-);
 export default router;
