@@ -29,6 +29,23 @@ class SettingsService {
     return settings;
   }
 
+  static async getAdminSlackSettings() {
+    const setting = await prisma.integrationSettings.findFirst({
+      where: {
+        slackWebhookUrl: { not: "" },
+        user: {
+          deletedAt: null,
+          userRoles: {
+            some: {
+              role: { name: "super_admin" },
+            },
+          },
+        },
+      },
+    });
+    return setting;
+  }
+
   static async updateSlackSettings(userId: string, data: any) {
     const updatedSettings = await prisma.integrationSettings.upsert({
       where: { userId },

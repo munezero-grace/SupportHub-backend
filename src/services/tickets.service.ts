@@ -268,32 +268,22 @@ export class TicketsService {
 
       // Send Slack notification (non-blocking - don't fail if it errors)
       try {
-        const slackSettings = await SettingsService.getSlackSettings(userId);
-        if (slackSettings && slackSettings.newTickets) {
-          const user =
-            await new (require("../services/user.service").UserService)().getUserById(
-              userId
-            );
-          const userName = user
-            ? `${user.firstName} ${user.lastName}`
-            : "Unknown";
+        const adminSettings = await SettingsService.getAdminSlackSettings();
+        if (adminSettings && adminSettings.newTickets && adminSettings.slackWebhookUrl) {
+          const userService = new (require("../services/user.service").UserService)();
+          const creator = await userService.getUserById(userId);
+          const userName = creator ? `${creator.firstName} ${creator.lastName}` : "Unknown";
           const product = ticketResult.productId
-            ? await prisma.products.findUnique({
-                where: { id: ticketResult.productId },
-              })
+            ? await prisma.products.findUnique({ where: { id: ticketResult.productId } })
             : null;
           const slackMessage = buildSlackTicketMessage(
-            {
-              ...ticketResult,
-              description: ticketResult.description ?? undefined,
-            },
+            { ...ticketResult, description: ticketResult.description ?? undefined },
             product ? product : {},
             userName
           );
-          await sendSlackNotification(slackMessage, userId);
+          await sendSlackNotification(slackMessage, adminSettings.userId);
         }
       } catch (slackError) {
-        // Log error but don't fail the ticket creation
         console.error("Slack notification error:", slackError);
       }
 
@@ -412,39 +402,26 @@ export class TicketsService {
 
         if ("status" in body) {
           try {
-            const userId = user?.id;
-            if (userId) {
-              const slackSettings = await SettingsService.getSlackSettings(
-                userId
-              );
-              if (!slackSettings || !slackSettings.statusChanges) {
-                return { error: ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED };
-              }
-              const userService =
-                new (require("../services/user.service").UserService)();
-              const userDetails = await userService.getUserById(userId);
-              const userName = userDetails
-                ? `${userDetails.firstName} ${userDetails.lastName}`
-                : "Unknown";
+            const adminSettings = await SettingsService.getAdminSlackSettings();
+            if (adminSettings && adminSettings.statusChanges && adminSettings.slackWebhookUrl) {
+              const userService = new (require("../services/user.service").UserService)();
+              const updater = await userService.getUserById(user?.id);
+              const userName = updater ? `${updater.firstName} ${updater.lastName}` : "Unknown";
               const oldStatus = oldTicket ? oldTicket.status : "Unknown";
-              const newStatus = body.status;
-
               const fullTicket = await TicketsService.getTicketById(id);
-              if (!fullTicket) {
-                throw new Error(ERROR_MESSAGES.FAILED_TO_RETRIEVE_TICKET);
-              } else {
+              if (fullTicket) {
                 const slackMessage = buildSlackStatusChangeMessage(
                   fullTicket.title || "Unknown",
                   fullTicket.ticketCode || "Unknown",
                   oldStatus,
-                  newStatus,
+                  body.status,
                   userName
                 );
-                await sendSlackNotification(slackMessage, userId);
+                await sendSlackNotification(slackMessage, adminSettings.userId);
               }
             }
-          } catch (error) {
-            throw new Error(ERROR_MESSAGES.SLACK_NOTIFICATION_FAILED);
+          } catch (slackError) {
+            console.error("Slack status notification error:", slackError);
           }
         }
         return { data: ticket };
