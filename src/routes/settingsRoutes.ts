@@ -5,7 +5,7 @@ import { WrapAsync } from "../middlewares/wrapAsync";
 
 const router = express.Router();
 
-router.get("/slack-integrations", WrapAsync(authenticateUser), WrapAsync(SettingsController.getSlackSettings));
+router.get("/slack-integration", WrapAsync(authenticateUser), WrapAsync(SettingsController.getSlackSettings));
 router.put("/slack-integration", WrapAsync(authenticateUser), WrapAsync(SettingsController.updateSlackSettings));
 
 export default router;
