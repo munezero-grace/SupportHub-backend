@@ -52,6 +52,12 @@ router.put(
   validateRequest(updateTicketSchema),
   WrapAsync(TicketsController.updateTicket)
 );
+router.post(
+  "/:id/assign",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.assignTicket)
+);
+
 router.delete(
   "/:id",
   WrapAsync(authenticateUser),

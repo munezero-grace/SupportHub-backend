@@ -95,6 +95,18 @@ class TicketsController {
     }
   }
 
+  static async assignTicket(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const { assigneeId } = req.body;
+      if (!assigneeId) return res.status(400).json({ error: "assigneeId is required" });
+      const result = await TicketsService.assignTicket(id, assigneeId, req.user?.id as string);
+      return handleServiceResult(res, result, "Ticket assigned successfully", ERROR_MESSAGES.GENERAL_ERROR, HTTP_OK, HTTP_BAD_REQUEST);
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message });
+    }
+  }
+
   static async getTicketsCount(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id as string;

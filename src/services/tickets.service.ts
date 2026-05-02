@@ -459,4 +459,44 @@ export class TicketsService {
     await TicketsService.deleteTicket(id);
     return true;
   }
+
+  static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string) {
+    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
+    if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
+
+    const assignee = await prisma.users.findUnique({ where: { id: assigneeId, deletedAt: null } });
+    if (!assignee) return { error: "Assignee not found" };
+
+    await prisma.userTickets.upsert({
+      where: { userId_ticketId: { userId: assigneeId, ticketId } },
+      update: {},
+      create: {
+        userId: assigneeId,
+        ticketId,
+        clientId: ticket.clientId ?? "",
+      },
+    });
+
+    const updated = await prisma.tickets.update({
+      where: { id: ticketId },
+      data: { status: "assigned" },
+      include: {
+        client: { select: { companyName: true } },
+        product: { select: { name: true } },
+      },
+    });
+
+    // Slack notification (non-blocking)
+    try {
+      const adminSettings = await SettingsService.getAdminSlackSettings();
+      if (adminSettings?.slackWebhookUrl && adminSettings.ticketAssignments) {
+        const message = `🔧 *Ticket Assigned*\n*Ticket:* ${ticket.ticketCode} — ${ticket.title}\n*Assigned to:* ${assignee.firstName} ${assignee.lastName}\n*Status:* assigned`;
+        await sendSlackNotification(message, adminSettings.userId);
+      }
+    } catch (e) {
+      console.error("Slack assignment notification error:", e);
+    }
+
+    return { data: updated };
+  }
 }
