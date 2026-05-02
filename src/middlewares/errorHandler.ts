@@ -8,6 +8,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
+  console.error("[ErrorHandler]", err.message, err.stack);
   res.status(HTTP_SERVER_ERROR).json({
     message: ERROR_MESSAGES.UNEXPECTED_ERROR,
     ...(process.env.NODE_ENV === "development" && { error: err.message }),

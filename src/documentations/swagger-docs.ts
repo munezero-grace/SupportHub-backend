@@ -100,6 +100,59 @@ const swaggerDocument = {
         },
       },
     },
+    "/api/users/profile/company": {
+      put: {
+        summary: "Update user company profile",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["id"],
+                properties: {
+                  id: {
+                    type: "string",
+                    description: "Client ID to update",
+                  },
+                  companyName: {
+                    type: "string",
+                    description: "Company name",
+                  },
+                  companyDomain: {
+                    type: "string",
+                    description: "Company domain",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Company profile updated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Bad request",
+          },
+          "401": {
+            description: "Unauthorized",
+          },
+        },
+      },
+    },
     "/api/settings/slack-integrations": {
       get: {
         summary: "Get Slack integration settings",

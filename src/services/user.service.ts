@@ -98,6 +98,13 @@ export class UserService {
 
   async getAllUsersWithRoles() {
     const users = await prisma.users.findMany({
+      where: {
+        userRoles: {
+          some: {
+            role: { name: { in: ["super_admin", "ticket_manager", "developer"] } },
+          },
+        },
+      },
       select: {
         id: true,
         firstName: true,

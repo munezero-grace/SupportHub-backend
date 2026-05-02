@@ -204,12 +204,11 @@ export class ClientService {
         filteredData[key] = data[key];
       }
     }
+
     return await prisma.clients.update({
       where: { id: clientId },
       data: filteredData,
-      include: {
-        user: { select: userInfoSelect },
-      },
+      include: { user: { select: userInfoSelect } },
     });
   }
 
@@ -223,12 +222,11 @@ export class ClientService {
       )
     )
       return { error: "Invalid status value" };
+
     return prisma.clients.update({
       where: { id: clientId },
       data: { status: status as ClientStatus },
-      include: {
-        user: { select: userInfoSelect },
-      },
+      include: { user: { select: userInfoSelect } },
     });
   }
 

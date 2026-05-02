@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { getClientById } from "../helpers/clientHelpers";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function validateClientId(
   req: Request,
   res: Response,
@@ -15,8 +17,7 @@ export async function validateClientId(
     });
   }
 
-  const { validate: isUuid } = await import("uuid");
-  if (!isUuid(clientId)) {
+  if (!UUID_REGEX.test(clientId)) {
     return res.status(400).json({
       error: ERROR_MESSAGES.INVALID_CLIENT_ID,
     });
