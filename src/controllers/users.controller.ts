@@ -64,6 +64,26 @@ class UsersController {
     }
   }
 
+  static async reactivateUser(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.params.id;
+      const result = await userService.reactivateUser(userId);
+      if ('error' in result) {
+        return res.status(404).json({ status: 'error', message: result.error });
+      }
+      return res.status(HTTP_OK).json({
+        status: 'success',
+        message: 'User reactivated successfully',
+        data: result,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        status: 'error',
+        message: error.message || 'Failed to reactivate user',
+      });
+    }
+  }
+
   static async softDeleteUser(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.params.id;

@@ -34,4 +34,11 @@ router.delete(
   WrapAsync(UsersController.softDeleteUser)
 );
 
+router.post(
+  "/:id/restore",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.reactivateUser)
+);
+
 export default router;

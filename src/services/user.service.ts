@@ -98,14 +98,12 @@ export class UserService {
 
   async getAllUsersWithRoles() {
     const users = await prisma.users.findMany({
-      where: {
-        deletedAt: null,
-      },
       select: {
         id: true,
         firstName: true,
         lastName: true,
         email: true,
+        deletedAt: true,
         userRoles: {
           select: {
             role: {
@@ -115,32 +113,36 @@ export class UserService {
             },
           },
         },
-        Clients: {
-          select: {
-            id: true,
-            deletedAt: true,
-          },
-        },
       },
     });
 
-    const usersWithRoles = users
-      .filter((user) => {
-        if (user.Clients && user.Clients.length > 0) {
-          return user.Clients.some((client) => client.deletedAt === null);
-        }
+    return users.map((user) => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      deletedAt: user.deletedAt,
+      roles: user.userRoles.map((ur) => ur.role.name),
+    }));
+  }
 
-        return true;
-      })
-      .map((user) => ({
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        roles: user.userRoles.map((ur) => ur.role.name),
-      }));
+  async reactivateUser(userId: string) {
+    try {
+      const user = await prisma.users.findUnique({ where: { id: userId } });
+      if (!user) return { error: ERROR_MESSAGES.USER_NOT_FOUND };
 
-    return usersWithRoles;
+      const updatedUser = await prisma.users.update({
+        where: { id: userId },
+        data: { deletedAt: null },
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw {
+        status: HTTP_BAD_REQUEST,
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.USER_DELETE_FAILED,
+      };
+    }
   }
 
   async findClientByUUID(clientId: string) {
