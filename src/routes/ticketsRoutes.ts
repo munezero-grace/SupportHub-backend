@@ -18,50 +18,55 @@ router.post(
   WrapAsync(authenticateUser),
   upload.array("files", 10),
   validateRequest(ticketSchema),
-  WrapAsync(TicketsController.createTicket)
+  WrapAsync(TicketsController.createTicket),
 );
 router.get(
   "/",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.getUserTickets)
+  WrapAsync(TicketsController.getUserTickets),
 );
 router.get(
   "/all",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.getAllTickets)
+  WrapAsync(TicketsController.getAllTickets),
 );
 router.get(
   "/count",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.getTicketsCount)
+  WrapAsync(TicketsController.getTicketsCount),
+);
+router.get(
+  "/ranked",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getRankedTickets),
 );
 router.get(
   "/code/:ticketCode",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.getTicketByCode)
+  WrapAsync(TicketsController.getTicketByCode),
 );
 router.get(
   "/:id",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.getTicketById)
+  WrapAsync(TicketsController.getTicketById),
 );
 router.put(
   "/:id",
   WrapAsync(authenticateUser),
   upload.array("files", 10),
   validateRequest(updateTicketSchema),
-  WrapAsync(TicketsController.updateTicket)
+  WrapAsync(TicketsController.updateTicket),
 );
 router.post(
   "/:id/assign",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.assignTicket)
+  WrapAsync(TicketsController.assignTicket),
 );
 
 router.delete(
   "/:id",
   WrapAsync(authenticateUser),
-  WrapAsync(TicketsController.deleteTicket)
+  WrapAsync(TicketsController.deleteTicket),
 );
 
 router.use(errorHandler);

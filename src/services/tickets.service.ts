@@ -19,6 +19,7 @@ import {
   throwIfTicketNotFound,
   throwIfNotAuthorized,
 } from "../helpers/ErrorHandling";
+import { scoreTicket } from "./priority.service";
 
 const prisma = new PrismaClient();
 const clientService = new ClientService();
@@ -116,6 +117,22 @@ export class TicketsService {
         });
       }
     }
+    try {
+      const score = await scoreTicket({
+        title: ticket.title,
+        description: ticket.description,
+        createdAt: ticket.createdAt,
+      });
+      await prisma.tickets.update({
+        where: { id: ticket.id },
+        data: {
+          priorityScore: score.priorityScore,
+          lastScoredAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error("Auto-score (create) failed:", e);
+    }
     return prisma.tickets.findUnique({
       where: { id: ticket.id },
       include: ticketIncludes,
@@ -172,10 +189,27 @@ export class TicketsService {
   }
 
   static async updateTicket(id: string, updateData: any) {
-    return await prisma.tickets.update({
+    const updated = await prisma.tickets.update({
       where: { id },
       data: updateData,
     });
+    try {
+      const score = await scoreTicket({
+        title: updated.title,
+        description: updated.description,
+        createdAt: updated.createdAt,
+      });
+      await prisma.tickets.update({
+        where: { id },
+        data: {
+          priorityScore: score.priorityScore,
+          lastScoredAt: new Date(),
+        },
+      });
+    } catch (e) {
+      console.error("Auto-score (update) failed:", e);
+    }
+    return updated;
   }
 
   static async deleteTicket(id: string) {

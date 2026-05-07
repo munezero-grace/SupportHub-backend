@@ -1,6 +1,4 @@
-import "dotenv/config";
 import express, { Request, Response } from "express";
-import * as dotenv from "dotenv";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/authRoutes";
@@ -13,16 +11,34 @@ import ticketsRoutes from "./routes/ticketsRoutes";
 import userRoutes from "./routes/userRoutes";
 import settingsRoutes from "./routes/settingsRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
-dotenv.config();
+import dotenv from "dotenv";
+import path from "path";
+import { startPriorityRefreshJob } from "./jobs/priorityRefresh";
+
+dotenv.config({
+  path: path.resolve(__dirname, "../.env"),
+});
+
+console.log("GROQ =", process.env.GROQ_API_KEY);
+console.log(
+  "GROQ KEY STATUS:",
+  process.env.GROQ_API_KEY ? "LOADED" : "MISSING",
+);
+
+console.log(
+  "ALL KEYS =",
+  Object.keys(process.env).filter((k) => k.includes("GROQ")),
+);
 
 const app = express();
+console.log("GROQ KEY:", process.env.GROQ_API_KEY);
 
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
-  })
+  }),
 );
 
 const limiter = rateLimit({
@@ -46,7 +62,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/tickets", ticketsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/settings",  settingsRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.get("/api", (_req: Request, res: Response) => {
   res.status(HTTP_OK).json({
@@ -61,6 +77,7 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
   console.log(`Swagger docs available at: http://localhost:${port}/api-docs`);
+  startPriorityRefreshJob();
 });
 
 setupSwagger(app);

@@ -1,76 +1,86 @@
-import { PrismaClient, UserRoleEnum} from "@prisma/client";
+import { PrismaClient, UserRoleEnum } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import * as dotenv from "dotenv";
-import { UserRole } from "../src/types";
-import { debug } from "console";
 
 dotenv.config();
 
 const prisma = new PrismaClient();
+
 async function main() {
   const email = process.env.SUPER_ADMIN_EMAIL || "superadmin@gmail.com";
   const password = process.env.SUPER_ADMIN_PASSWORD || "Superadmin123...";
+
   if (!email || !password) {
-    throw new Error(
-      "Environment variables SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be defined"
-    );
+    throw new Error("Missing SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD");
   }
-  const roleNames = [
-    UserRole.SUPER_ADMIN,
-    UserRole.TICKET_MANAGER,
-    UserRole.DEVELOPER,
-    UserRole.CLIENT,
+
+  const roleNames: UserRoleEnum[] = [
+    UserRoleEnum.super_admin,
+    UserRoleEnum.ticket_manager,
+    UserRoleEnum.developer,
+    UserRoleEnum.client,
   ];
 
   const roles = await Promise.all(
-    roleNames.map((roleName) =>
+    roleNames.map((name) =>
       prisma.roles.upsert({
-        where: { name: roleName as UserRoleEnum },
+        where: { name },
         update: {},
-        create: { name: roleName as UserRoleEnum },
-      })
-    )
+        create: { name },
+      }),
+    ),
   );
 
-  let superAdmin = await prisma.users.findUnique({
-    where: { email: email },
-  });
-  if (!superAdmin) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // ✅ Explicit type on `r` to satisfy strict ts-node
+  const superAdminRole = roles.find(
+    (r: { id: string; name: UserRoleEnum }) =>
+      r.name === UserRoleEnum.super_admin,
+  );
 
-    superAdmin = await prisma.users.create({
-      data: {
-        firstName: "Super",
-        lastName: "Admin",
-        email: email,
-        password: hashedPassword,
-        provider: "credentials",
-        providerId: "seeded-superadmin",
-      },
-    });
+  if (!superAdminRole) {
+    throw new Error("super_admin role missing after seeding");
   }
-  const superAdminRole = roles.find((r) => r.name === "super_admin");
-  if (superAdmin && superAdminRole) {
-    const userRole = await prisma.userRoles.findFirst({
-      where: {
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const superAdmin = await prisma.users.upsert({
+    where: { email },
+    update: {
+      password: hashedPassword,
+      provider: "credentials",
+    },
+    create: {
+      firstName: "Super",
+      lastName: "Admin",
+      email,
+      password: hashedPassword,
+      provider: "credentials",
+      providerId: "seeded-superadmin",
+    },
+  });
+
+  const existingRole = await prisma.userRoles.findFirst({
+    where: {
+      userId: superAdmin.id,
+      roleId: superAdminRole.id,
+    },
+  });
+
+  if (!existingRole) {
+    await prisma.userRoles.create({
+      data: {
         userId: superAdmin.id,
         roleId: superAdminRole.id,
       },
     });
-    if (!userRole) {
-      await prisma.userRoles.create({
-        data: {
-          userId: superAdmin.id,
-          roleId: superAdminRole.id,
-        },
-      });
-    }
   }
+
+  console.log("✅ Super admin ensured successfully:", email);
 }
 
 main()
   .catch((e) => {
-    debug("Error seeding database:", e);
+    console.error("❌ Seed error:", e);
     process.exit(1);
   })
   .finally(async () => {
