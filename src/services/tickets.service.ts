@@ -333,7 +333,7 @@ export class TicketsService {
       throw new Error(ERROR_MESSAGES.USER_DOES_NOT_EXIST);
     }
     const userRole = await getUserRole(userId);
-    const isAdmin = userRole === "super_admin";
+    const isAdmin = userRole === "super_admin" || userRole === "ticket_manager";
     const queryOptions = {
       orderBy: [{ createdAt: "desc" }],
       include: {
