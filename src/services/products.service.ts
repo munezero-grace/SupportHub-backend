@@ -55,14 +55,26 @@ export class ProductsService {
                 }
               }
             }
-          }
-        }
-      }); 
-      
+          },
+          _count: {
+            select: {
+              Tickets: {
+                where: {
+                  status: { in: ['new', 'in_progress', 'assigned', 'awaiting_client'] },
+                },
+              },
+            },
+          },
+        },
+      });
+
       if (!products) {
         return { error: ERROR_MESSAGES.FAILED_TO_RETRIEVE_PRODUCTS_FROM_DATABASE };
       }
-      return products;
+      return products.map(({ _count, ...rest }) => ({
+        ...rest,
+        activeTickets: _count.Tickets,
+      })) as unknown as Products[];
     } catch (error) {
       throw error;
     }

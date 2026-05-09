@@ -119,9 +119,21 @@ export class ClientService {
               product: true,
             },
           },
+          _count: {
+            select: {
+              Tickets: {
+                where: {
+                  status: { in: ['new', 'in_progress', 'assigned', 'awaiting_client'] },
+                },
+              },
+            },
+          },
         },
       });
-      return clients;
+      return clients.map(({ _count, ...rest }) => ({
+        ...rest,
+        activeTickets: _count.Tickets,
+      })) as unknown as Clients[];
     } catch (error) {
       return {
         error:
