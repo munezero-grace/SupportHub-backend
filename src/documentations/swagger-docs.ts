@@ -153,6 +153,60 @@ const swaggerDocument = {
         },
       },
     },
+    "/api/tickets/ranked": {
+      get: {
+        summary: "Get tickets ranked by priority score",
+        description:
+          "Returns all open tickets sorted by AI-computed priority score (highest first). Each ticket includes priorityScore (0–1) and lastScoredAt timestamp.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Ranked ticket list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          id: { type: "string" },
+                          ticketCode: { type: "string" },
+                          title: { type: "string" },
+                          description: { type: "string", nullable: true },
+                          status: { type: "string" },
+                          tags: { type: "array", items: { type: "string" } },
+                          priorityScore: {
+                            type: "number",
+                            format: "float",
+                            minimum: 0,
+                            maximum: 1,
+                            description: "AI priority score from 0 (lowest) to 1 (highest)",
+                            nullable: true,
+                          },
+                          lastScoredAt: {
+                            type: "string",
+                            format: "date-time",
+                            description: "When the priority score was last computed",
+                            nullable: true,
+                          },
+                          createdAt: { type: "string", format: "date-time" },
+                          updatedAt: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
     "/api/settings/slack-integrations": {
       get: {
         summary: "Get Slack integration settings",
