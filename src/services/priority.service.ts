@@ -45,8 +45,27 @@ export const scoreTicket = async (
       messages: [
         {
           role: "system",
-          content:
-            'You score support tickets on two axes. Reply with STRICT JSON only, no prose: {"emotion": <number 0..1>, "complexity": <number 0..1>}. emotion = frustration/urgency in the writer\'s tone (0 calm, 1 furious). complexity = technical severity (0 trivial cosmetic, 1 system-down/data-loss).',
+          content: [
+            'Score a support ticket on two axes. Reply with STRICT JSON only, no prose: {"emotion": <float 0.0-1.0>, "complexity": <float 0.0-1.0>}',
+            '',
+            'emotion — the frustration or urgency expressed in the WRITER\'S TONE and word choice only.',
+            '  0.0 = calm, polite, no urgency ("could you please", "when convenient", "just a thought")',
+            '  0.2 = mildly concerned, professional language ("would appreciate a fix", "minor issue")',
+            '  0.4 = noticeably frustrated, some urgency ("this is annoying", "please fix soon", "blocking us")',
+            '  0.6 = clearly frustrated, strong language ("unacceptable", "very urgent", "escalating this")',
+            '  0.8 = angry, demanding, threatening consequences ("this is a disaster", "we are losing money")',
+            '  1.0 = furious, aggressive, ultimatums ("FIX THIS NOW", "legal action", "I DEMAND")',
+            'Score ONLY the tone — not the implied urgency of the topic itself. "All clients are blocked" is factual scope, not emotion.',
+            '',
+            'complexity — the TECHNICAL severity and business impact of the problem described.',
+            '  0.0 = cosmetic only: typo, colour, grammar, spacing, icon size',
+            '  0.2 = minor UX or feature request: dark mode, sorting preference, alignment glitch',
+            '  0.4 = single feature degraded, workaround exists: slow load, filter not saving, wrong timezone',
+            '  0.6 = one isolated feature broken, data is safe and system still runs: export fails, search wrong, emails not sending',
+            '  0.8 = core workflow broken for many users, but system is up: login broken for a user group, financial reports wrong, backups failing',
+            '  1.0 = system down, irreversible data loss, or active security breach: database unreachable, PII exposed, payments stopped',
+            'Base complexity on the TECHNICAL PROBLEM, not on how many users complain about it.',
+          ].join('\n'),
         },
         {
           role: "user",
