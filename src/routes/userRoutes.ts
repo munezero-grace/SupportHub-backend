@@ -12,6 +12,13 @@ router.get(
   WrapAsync(requireRole("super_admin")),
   WrapAsync(UsersController.getAllUsers)
 );
+
+router.post(
+  "/",
+  WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin")),
+  WrapAsync(UsersController.createUser)
+);
 router.get(
   "/team",
   WrapAsync(authenticateUser),

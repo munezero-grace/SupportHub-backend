@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRoleEnum } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
 import { HTTP_BAD_REQUEST } from "../constants/httpStatusCodes";
 import { ERROR_MESSAGES } from "../constants/response/errors";
 import { SUCCESS_MESSAGES } from "../constants/response/successMessages";
@@ -96,12 +97,59 @@ export class UserService {
     return user;
   }
 
+  async createUser(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: string;
+    clientId?: string;
+  }) {
+    const { firstName, lastName, email, password, role, clientId } = data;
+
+    const existing = await prisma.users.findUnique({ where: { email } });
+    if (existing) {
+      throw new Error(ERROR_MESSAGES.USER_EMAIL_EXISTS);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.users.create({
+        data: { firstName, lastName, email, password: hashedPassword },
+        select: { id: true, firstName: true, lastName: true, email: true },
+      });
+
+      let roleRecord = await tx.roles.findUnique({
+        where: { name: role as UserRoleEnum },
+      });
+      if (!roleRecord) {
+        roleRecord = await tx.roles.create({ data: { name: role as UserRoleEnum } });
+      }
+
+      await tx.userRoles.create({ data: { userId: user.id, roleId: roleRecord.id } });
+
+      if (role === "client" && clientId) {
+        await tx.clients.update({
+          where: { id: clientId },
+          data: { userId: user.id },
+        });
+      }
+
+      return user;
+    });
+  }
+
   async getAllUsersWithRoles() {
     const users = await prisma.users.findMany({
       where: {
         userRoles: {
           some: {
-            role: { name: { in: ["super_admin", "ticket_manager", "developer"] } },
+            role: {
+              name: {
+                in: ["super_admin", "ticket_manager", "developer", "client"],
+              },
+            },
           },
         },
       },

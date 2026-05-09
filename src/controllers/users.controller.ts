@@ -93,6 +93,39 @@ class UsersController {
     }
   }
 
+  static async createUser(req: Request, res: Response): Promise<Response> {
+    try {
+      const { firstName, lastName, email, password, role, clientId } = req.body;
+
+      if (!firstName || !lastName || !email || !password || !role) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          error: "firstName, lastName, email, password, and role are required",
+        });
+      }
+
+      const validRoles = ["super_admin", "ticket_manager", "developer", "client"];
+      if (!validRoles.includes(role)) {
+        return res.status(HTTP_BAD_REQUEST).json({ error: "Invalid role" });
+      }
+
+      if (role === "client" && !clientId) {
+        return res.status(HTTP_BAD_REQUEST).json({
+          error: "clientId is required when role is client",
+        });
+      }
+
+      const user = await userService.createUser({ firstName, lastName, email, password, role, clientId });
+      return res.status(201).json({
+        message: SUCCESS_MESSAGES.USER_REGISTERED,
+        data: user,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({
+        error: error.message || "Failed to create user",
+      });
+    }
+  }
+
   static async softDeleteUser(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.params.id;
