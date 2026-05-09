@@ -15,7 +15,7 @@ declare global {
 
 const prisma = new PrismaClient();
 
-export function requireRole(roleName: string) {
+export function requireRole(...allowedRoles: string[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = req.user as { id: string; role?: string } | undefined;
@@ -27,14 +27,12 @@ export function requireRole(roleName: string) {
           code: "NO_USER"
         });
       }
-      if (user.role && user.role === roleName) {
+      if (user.role && allowedRoles.includes(user.role)) {
         return next();
       }
       const userRole = await prisma.userRoles.findFirst({
         where: { userId: user.id },
-        include: {
-          role: true
-        }
+        include: { role: true }
       });
 
       if (!userRole || !userRole.role) {
@@ -43,11 +41,11 @@ export function requireRole(roleName: string) {
           .json({ message: "Forbidden: No role assigned" });
       }
 
-      if (userRole.role.name !== roleName) {
+      if (!allowedRoles.includes(userRole.role.name)) {
         return res
           .status(HTTP_ACCESS_DENIED)
           .json({
-            message: `Forbidden: Requires ${roleName} role. Current role: ${userRole.role.name}`
+            message: `Forbidden: Requires one of [${allowedRoles.join(", ")}]. Current role: ${userRole.role.name}`
           });
       }
       req.user!.role = userRole.role.name;

@@ -23,7 +23,7 @@ router.post(
 router.get(
   "/",
   WrapAsync(authenticateUser),
-  WrapAsync(requireRole("super_admin")),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(ProductController.getAllProducts)
 );
 
@@ -48,7 +48,7 @@ router.get(
 router.get(
   "/:productCode",
   WrapAsync(authenticateUser),
-  WrapAsync(requireRole("super_admin")),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(ProductController.getProductByCode)
 );
 
