@@ -494,6 +494,23 @@ export class TicketsService {
     return true;
   }
 
+  static async getDeveloperAssignedTickets(userId: string) {
+    const assignments = await prisma.userTickets.findMany({
+      where: { userId },
+      include: {
+        ticket: {
+          include: {
+            client: { select: { id: true, companyName: true, clientCode: true, status: true } },
+            product: { select: { id: true, name: true, productCode: true, status: true, updatedAt: true } },
+            owner: { select: { id: true, firstName: true, lastName: true, email: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return assignments.map((a) => a.ticket).filter(Boolean);
+  }
+
   static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string) {
     const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };

@@ -158,6 +158,19 @@ class TicketsController {
     }
   }
 
+  static async getAssignedTickets(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id as string;
+      const tickets = await TicketsService.getDeveloperAssignedTickets(userId);
+      return res.status(HTTP_OK).json({
+        message: SUCCESS_MESSAGES.TICKETS_RETRIEVED,
+        data: tickets,
+      });
+    } catch (error: any) {
+      return res.status(HTTP_BAD_REQUEST).json({ error: error.message });
+    }
+  }
+
   static async assignTicket(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
