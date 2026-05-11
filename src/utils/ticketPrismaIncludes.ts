@@ -7,6 +7,12 @@ export const ticketIncludes = {
         include: {
             user: { select: { id: true, firstName: true, lastName: true } }
         }
+    },
+    TicketNotes: {
+        include: {
+            user: { select: { id: true, firstName: true, lastName: true } }
+        },
+        orderBy: { createdAt: 'asc' as const }
     }
 };
 

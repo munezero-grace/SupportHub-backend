@@ -158,6 +158,17 @@ class TicketsController {
     }
   }
 
+  static async addNote(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user?.id as string;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Note text is required" });
+    }
+    const result = await TicketsService.addNote(id, userId, text.trim());
+    return handleServiceResult(res, result, "Note added", "Failed to add note", 201, 400);
+  }
+
   static async getAssignedTickets(req: Request, res: Response): Promise<Response> {
     try {
       const userId = req.user?.id as string;
