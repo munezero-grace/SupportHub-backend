@@ -73,6 +73,11 @@ router.post(
   WrapAsync(TicketsController.assignTicket),
 );
 router.post(
+  "/:id/comments",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.addComment),
+);
+router.post(
   "/:id/notes",
   WrapAsync(authenticateUser),
   WrapAsync(TicketsController.addNote),

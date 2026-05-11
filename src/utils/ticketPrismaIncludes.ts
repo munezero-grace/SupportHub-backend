@@ -13,6 +13,12 @@ export const ticketIncludes = {
             user: { select: { id: true, firstName: true, lastName: true } }
         },
         orderBy: { createdAt: 'asc' as const }
+    },
+    TicketComments: {
+        include: {
+            user: { select: { id: true, firstName: true, lastName: true } }
+        },
+        orderBy: { createdAt: 'asc' as const }
     }
 };
 

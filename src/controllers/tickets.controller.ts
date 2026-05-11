@@ -158,6 +158,17 @@ class TicketsController {
     }
   }
 
+  static async addComment(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user?.id as string;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Comment text is required" });
+    }
+    const result = await TicketsService.addComment(id, userId, text.trim());
+    return handleServiceResult(res, result, "Comment added", "Failed to add comment", 201, 400);
+  }
+
   static async addNote(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     const { text } = req.body;

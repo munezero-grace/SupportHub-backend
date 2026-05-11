@@ -32,6 +32,7 @@ model Users {
   UserTickets         UserTickets[]
   IntegrationSettings IntegrationSettings?
   TicketNotes         TicketNote[]
+  TicketComments      TicketComment[]
 }
 
 model Roles {
@@ -153,6 +154,7 @@ model Tickets {
 
   TicketAttachments TicketAttachment[]
   TicketNotes       TicketNote[]
+  TicketComments    TicketComment[]
 
   @@map("Tickets")
 }
@@ -181,6 +183,19 @@ model UserTickets {
 
   @@unique([userId, ticketId])
   @@map("UserTickets")
+}
+
+model TicketComment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  ticket Tickets @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("TicketComments")
 }
 
 model TicketNote {

@@ -517,6 +517,16 @@ export class TicketsService {
     return true;
   }
 
+  static async addComment(ticketId: string, userId: string, text: string) {
+    const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
+    if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
+    const comment = await prisma.ticketComment.create({
+      data: { ticketId, userId, text },
+      include: { user: { select: { id: true, firstName: true, lastName: true } } },
+    });
+    return { data: comment };
+  }
+
   static async addNote(ticketId: string, userId: string, text: string) {
     const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
