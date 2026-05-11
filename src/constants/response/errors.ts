@@ -70,7 +70,10 @@ export const ERROR_MESSAGES = {
   FAILED_TO_FETCH_CLIENT_STATS: "Failed to fetch client statistics",
   FAILED_TO_FETCH_PRODUCT_STATS: "Failed to fetch product statistics",
   FAILED_TO_FETCH_DASHBOARD_DATA: "Failed to fetch dashboard data",
-  NOT_AUTHORIZED: "You are not authorized to view this ticket"
+  NOT_AUTHORIZED: "You are not authorized to view this ticket",
+  TICKET_TITLE_REQUIRED: "Ticket title is required.",
+  TICKET_DESCRIPTION_REQUIRED: "Ticket description is required.",
+  TICKET_CLIENT_REQUIRED: "A client must be selected for this ticket.",
 };
 
 export const RESPONSE_STATUS = {

@@ -59,6 +59,14 @@ export class TicketsService {
       internalNotes,
       description,
     } = ticketData;
+
+    if (!title || !title.trim()) {
+      return { error: ERROR_MESSAGES.TICKET_TITLE_REQUIRED };
+    }
+    if (!description || !description.trim()) {
+      return { error: ERROR_MESSAGES.TICKET_DESCRIPTION_REQUIRED };
+    }
+
     const userClient = await clientService.findClientByUserId(userId);
     let finalClientId = clientId;
     if (!clientId && userClient && "id" in userClient)
@@ -282,12 +290,23 @@ export class TicketsService {
         return { error: ERROR_MESSAGES.USER_DOES_NOT_EXIST };
       }
 
+      // Validate required fields before touching the database
+      if (!body.title || !body.title.trim()) {
+        return { error: ERROR_MESSAGES.TICKET_TITLE_REQUIRED };
+      }
+      if (!body.description || !body.description.trim()) {
+        return { error: ERROR_MESSAGES.TICKET_DESCRIPTION_REQUIRED };
+      }
+
       const userRole = await getUserRole(userId);
       const isAdmin =
         userRole?.includes("admin") || userRole?.includes("super_admin");
       let imageUrls: string[] = await uploadTicketFiles(files);
       let ticketData;
       if (isAdmin) {
+        if (!body.clientId || !body.clientId.trim()) {
+          return { error: ERROR_MESSAGES.TICKET_CLIENT_REQUIRED };
+        }
         ticketData = { ...body, imageUrls };
       } else {
         const client = await new ClientService().findClientByUserId(userId);
