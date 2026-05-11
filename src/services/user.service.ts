@@ -199,6 +199,15 @@ export class UserService {
         userRoles: {
           select: { role: { select: { name: true } } },
         },
+        _count: {
+          select: {
+            UserTickets: {
+              where: {
+                ticket: { status: { not: "resolved" } },
+              },
+            },
+          },
+        },
       },
     });
     return users.map((u) => ({
@@ -207,6 +216,7 @@ export class UserService {
       lastName: u.lastName,
       email: u.email,
       roles: u.userRoles.map((ur) => ur.role.name),
+      assignedTicketCount: u._count.UserTickets,
     }));
   }
 
