@@ -131,6 +131,11 @@ export class TicketsService {
         description: ticket.description,
         createdAt: ticket.createdAt,
       });
+      const hoursUntilDue =
+        score.priorityScore >= 0.75 ? 4 :
+        score.priorityScore >= 0.5  ? 24 :
+        score.priorityScore >= 0.25 ? 72 : 168;
+      const autoDueDate = new Date(Date.now() + hoursUntilDue * 3600_000);
       await prisma.tickets.update({
         where: { id: ticket.id },
         data: {
@@ -138,6 +143,8 @@ export class TicketsService {
           emotionScore: score.emotion,
           complexityScore: score.complexity,
           lastScoredAt: new Date(),
+          // Only set auto due date if none was provided manually
+          ...(!dueDate && { dueDate: autoDueDate }),
         },
       });
     } catch (e) {
