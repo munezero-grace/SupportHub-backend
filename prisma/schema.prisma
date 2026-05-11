@@ -136,8 +136,10 @@ model Tickets {
   internalNotes String?
   tags          String[]      @default([])
   dueDate       DateTime?
-  priorityScore Float?        @default(0)
-  lastScoredAt  DateTime?
+  priorityScore   Float?        @default(0)
+  emotionScore    Float?
+  complexityScore Float?
+  lastScoredAt    DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   owner         Users?        @relation(fields: [createdBy], references: [id], onDelete: Cascade)

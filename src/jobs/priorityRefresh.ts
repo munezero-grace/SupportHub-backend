@@ -30,6 +30,8 @@ async function refreshPriorities() {
         where: { id: t.id },
         data: {
           priorityScore: score.priorityScore,
+          emotionScore: score.emotion,
+          complexityScore: score.complexity,
           lastScoredAt: new Date(),
         },
       });

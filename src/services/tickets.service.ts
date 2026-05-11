@@ -127,6 +127,8 @@ export class TicketsService {
         where: { id: ticket.id },
         data: {
           priorityScore: score.priorityScore,
+          emotionScore: score.emotion,
+          complexityScore: score.complexity,
           lastScoredAt: new Date(),
         },
       });
@@ -203,6 +205,8 @@ export class TicketsService {
         where: { id },
         data: {
           priorityScore: score.priorityScore,
+          emotionScore: score.emotion,
+          complexityScore: score.complexity,
           lastScoredAt: new Date(),
         },
       });
