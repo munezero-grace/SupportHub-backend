@@ -565,7 +565,7 @@ export class TicketsService {
     return TicketsService.getDeveloperAssignedTickets(userId);
   }
 
-  static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string) {
+  static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string, deadline?: string) {
     const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };
 
@@ -584,7 +584,10 @@ export class TicketsService {
 
     const updated = await prisma.tickets.update({
       where: { id: ticketId },
-      data: { status: "assigned" },
+      data: {
+        status: "assigned",
+        ...(deadline && { dueDate: new Date(deadline) }),
+      },
       include: {
         client: { select: { companyName: true } },
         product: { select: { name: true } },

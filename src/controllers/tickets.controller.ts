@@ -209,13 +209,14 @@ class TicketsController {
   static async assignTicket(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const { assigneeId } = req.body;
+      const { assigneeId, deadline } = req.body;
       if (!assigneeId)
         return res.status(400).json({ error: "assigneeId is required" });
       const result = await TicketsService.assignTicket(
         id,
         assigneeId,
         req.user?.id as string,
+        deadline,
       );
       return handleServiceResult(
         res,
