@@ -544,6 +544,10 @@ export class TicketsService {
     return assignments.map((a) => a.ticket).filter(Boolean);
   }
 
+  static async getTicketsAssignedToUser(userId: string) {
+    return TicketsService.getDeveloperAssignedTickets(userId);
+  }
+
   static async assignTicket(ticketId: string, assigneeId: string, _assignedBy: string) {
     const ticket = await prisma.tickets.findUnique({ where: { id: ticketId } });
     if (!ticket) return { error: ERROR_MESSAGES.TICKET_NOT_FOUND };

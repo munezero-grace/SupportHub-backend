@@ -46,6 +46,11 @@ router.get(
   WrapAsync(TicketsController.getAssignedTickets),
 );
 router.get(
+  "/assigned/:userId",
+  WrapAsync(authenticateUser),
+  WrapAsync(TicketsController.getTicketsForUser),
+);
+router.get(
   "/code/:ticketCode",
   WrapAsync(authenticateUser),
   WrapAsync(TicketsController.getTicketByCode),
