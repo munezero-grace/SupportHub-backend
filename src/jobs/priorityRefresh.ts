@@ -29,10 +29,13 @@ async function refreshPriorities() {
       await prisma.tickets.update({
         where: { id: t.id },
         data: {
-          priorityScore: score.priorityScore,
-          emotionScore: score.emotion,
+          priorityScore:   score.priorityScore,
+          emotionScore:    score.emotion,
           complexityScore: score.complexity,
-          lastScoredAt: new Date(),
+          agingScore:      score.agingScore,
+          llmReasoning:    score.llmReasoning,
+          confidence:      score.confidence,
+          lastScoredAt:    new Date(),
         },
       });
       updated++;

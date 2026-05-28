@@ -141,6 +141,9 @@ model Tickets {
   priorityScore   Float?        @default(0)
   emotionScore    Float?
   complexityScore Float?
+  agingScore      Float?
+  llmReasoning    String?
+  confidence      Float?
   lastScoredAt    DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
