@@ -19,19 +19,12 @@ dotenv.config({
   path: path.resolve(__dirname, "../.env"),
 });
 
-console.log("GROQ =", process.env.GROQ_API_KEY);
 console.log(
-  "GROQ KEY STATUS:",
-  process.env.GROQ_API_KEY ? "LOADED" : "MISSING",
-);
-
-console.log(
-  "ALL KEYS =",
-  Object.keys(process.env).filter((k) => k.includes("GROQ")),
+  "GROQ API key:",
+  process.env.GROQ_API_KEY ? "loaded ✓" : "MISSING",
 );
 
 const app = express();
-console.log("GROQ KEY:", process.env.GROQ_API_KEY);
 
 app.use(
   cors({
