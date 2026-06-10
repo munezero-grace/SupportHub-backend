@@ -139,10 +139,13 @@ export class TicketsService {
       await prisma.tickets.update({
         where: { id: ticket.id },
         data: {
-          priorityScore: score.priorityScore,
-          emotionScore: score.emotion,
+          priorityScore:   score.priorityScore,
+          emotionScore:    score.emotion,
           complexityScore: score.complexity,
-          lastScoredAt: new Date(),
+          agingScore:      score.agingScore,
+          llmReasoning:    score.llmReasoning,
+          confidence:      score.confidence,
+          lastScoredAt:    new Date(),
           // Only set auto due date if none was provided manually
           ...(!dueDate && { dueDate: autoDueDate }),
         },
@@ -171,7 +174,7 @@ export class TicketsService {
           : {
               OR: [{ createdBy: userId }, { client: { userId: userId } }],
             },
-        orderBy: [{ createdAt: "desc" }],
+        orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
         include: ticketListIncludes,
       });
     } catch (error) {
@@ -219,10 +222,13 @@ export class TicketsService {
       await prisma.tickets.update({
         where: { id },
         data: {
-          priorityScore: score.priorityScore,
-          emotionScore: score.emotion,
+          priorityScore:   score.priorityScore,
+          emotionScore:    score.emotion,
           complexityScore: score.complexity,
-          lastScoredAt: new Date(),
+          agingScore:      score.agingScore,
+          llmReasoning:    score.llmReasoning,
+          confidence:      score.confidence,
+          lastScoredAt:    new Date(),
         },
       });
     } catch (e) {
@@ -239,7 +245,7 @@ export class TicketsService {
 
   static async getAllTickets() {
     return await prisma.tickets.findMany({
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
       include: ticketListIncludes,
     });
   }
@@ -365,7 +371,7 @@ export class TicketsService {
     const userRole = await getUserRole(userId);
     const isAdmin = userRole === "super_admin" || userRole === "ticket_manager";
     const queryOptions = {
-      orderBy: [{ createdAt: "desc" }],
+      orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
       include: {
         client: {
           select: {
