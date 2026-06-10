@@ -1,0 +1,57 @@
+
+============================================================
+  ML Classifier — Evaluation Report
+  TF-IDF (1-2 gram) + Logistic Regression
+============================================================
+  Train set : 180 rows  (train.csv)
+  Test set  : 46 rows  (locked — test.csv)
+  Features  : TF-IDF, max 10 000 terms, sublinear_tf=True
+  Model     : LogisticRegression, C=1.0, balanced weights
+
+  Accuracy
+  --------------------------------------------------
+  Train accuracy : 0.950   (sanity check — not reported)
+  Test  accuracy : 0.761
+
+  F1 Scores (test set)
+  --------------------------------------------------
+  Macro F1    : 0.714   ##############......
+  Weighted F1 : 0.758   ###############.....
+
+  Per-Class F1
+  --------------------------------------------------
+  LOW         F1=0.933  ###################.  (n=14)
+  MEDIUM      F1=0.625  ############........  (n=9)
+  HIGH        F1=0.471  #########...........  (n=8)
+  CRITICAL    F1=0.828  #################...  (n=15)
+
+  Confusion Matrix
+  --------------------------------------------------
+  Rows = actual label,  Cols = predicted label
+
+                 LOW    MEDIUM      HIGH  CRITICAL
+  LOW             14         0         0         0
+  MEDIUM           1         5         3         0
+  HIGH             0         2         4         2
+  CRITICAL         1         0         2        12
+
+  Full Classification Report
+  --------------------------------------------------
+                precision    recall  f1-score   support
+  
+           LOW      0.875     1.000     0.933        14
+        MEDIUM      0.714     0.556     0.625         9
+          HIGH      0.444     0.500     0.471         8
+      CRITICAL      0.857     0.800     0.828        15
+  
+      accuracy                          0.761        46
+     macro avg      0.723     0.714     0.714        46
+  weighted avg      0.763     0.761     0.758        46
+
+============================================================
+  VERDICT
+============================================================
+  Macro F1 = 0.714  [GOOD]
+  [PASS]  Classifier is competitive -- include in thesis comparison.
+============================================================
+

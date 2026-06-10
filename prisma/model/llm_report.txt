@@ -1,0 +1,43 @@
+
+============================================================
+  LLM Evaluation Report
+  Groq / llama-3.1-8b-instant
+============================================================
+  Test set : 46 rows  (locked gold dataset)
+  Method   : zero-shot scoring, score->tier thresholds
+
+  Accuracy    : 0.543
+  Macro F1    : 0.479   ##########..........
+  Weighted F1 : 0.464   #########...........
+
+  Per-Class F1
+  --------------------------------------------------
+  LOW         F1=0.897  ##################..  (n=14)
+  MEDIUM      F1=0.636  #############.......  (n=9)
+  HIGH        F1=0.385  ########............  (n=8)
+  CRITICAL    F1=0.000  ....................  (n=15)
+
+  Confusion Matrix
+  --------------------------------------------------
+  Rows = actual,  Cols = predicted
+
+                 LOW    MEDIUM      HIGH  CRITICAL
+  LOW             13         1         0         0
+  MEDIUM           2         7         0         0
+  HIGH             0         3         5         0
+  CRITICAL         0         2        13         0
+
+  Full Classification Report
+  --------------------------------------------------
+                precision    recall  f1-score   support
+  
+           LOW      0.867     0.929     0.897        14
+        MEDIUM      0.538     0.778     0.636         9
+          HIGH      0.278     0.625     0.385         8
+      CRITICAL      0.000     0.000     0.000        15
+  
+      accuracy                          0.543        46
+     macro avg      0.421     0.583     0.479        46
+  weighted avg      0.417     0.543     0.464        46
+
+============================================================

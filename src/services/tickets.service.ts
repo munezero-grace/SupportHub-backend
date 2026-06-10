@@ -43,6 +43,64 @@ export class TicketsService {
     return `T-${lastCodeNumber + 1}`;
   }
 
+  /**
+   * Scores a ticket in the background (off the request path) and writes the
+   * result back to the DB once it resolves. Failures are logged only — the
+   * hourly priorityRefresh cron job will pick up any ticket that's still
+   * unscored.
+   */
+  private static queueBackgroundScoring(
+    ticket: {
+      id: string;
+      ticketCode: string;
+      title: string;
+      description: string | null;
+      createdAt: Date;
+    },
+    options?: { setAutoDueDate?: boolean; manualDueDate?: unknown }
+  ) {
+    console.log(`[scoring] ticket ${ticket.ticketCode} queued for background scoring`);
+
+    setImmediate(async () => {
+      try {
+        const score = await scoreTicket({
+          title: ticket.title,
+          description: ticket.description,
+          createdAt: ticket.createdAt,
+        });
+
+        const data: Record<string, unknown> = {
+          priorityScore:   score.priorityScore,
+          emotionScore:    score.emotion,
+          complexityScore: score.complexity,
+          agingScore:      score.agingScore,
+          llmReasoning:    score.llmReasoning,
+          confidence:      score.confidence,
+          lastScoredAt:    new Date(),
+        };
+
+        if (options?.setAutoDueDate && !options.manualDueDate) {
+          const hoursUntilDue =
+            score.priorityScore >= 0.75 ? 4 :
+            score.priorityScore >= 0.5  ? 24 :
+            score.priorityScore >= 0.25 ? 72 : 168;
+          data.dueDate = new Date(Date.now() + hoursUntilDue * 3600_000);
+        }
+
+        await prisma.tickets.update({ where: { id: ticket.id }, data });
+
+        console.log(
+          `[scoring] ticket ${ticket.ticketCode} scored successfully — priority: ${score.priority.toUpperCase()}`
+        );
+      } catch (e) {
+        console.error(
+          `[scoring] ticket ${ticket.ticketCode} scoring failed — will retry on next cron run:`,
+          e
+        );
+      }
+    });
+  }
+
   static async createTicket(
     userId: string,
     ticketData: CreateTicketData & { imageUrls?: string[] }
@@ -125,34 +183,11 @@ export class TicketsService {
         });
       }
     }
-    try {
-      const score = await scoreTicket({
-        title: ticket.title,
-        description: ticket.description,
-        createdAt: ticket.createdAt,
-      });
-      const hoursUntilDue =
-        score.priorityScore >= 0.75 ? 4 :
-        score.priorityScore >= 0.5  ? 24 :
-        score.priorityScore >= 0.25 ? 72 : 168;
-      const autoDueDate = new Date(Date.now() + hoursUntilDue * 3600_000);
-      await prisma.tickets.update({
-        where: { id: ticket.id },
-        data: {
-          priorityScore:   score.priorityScore,
-          emotionScore:    score.emotion,
-          complexityScore: score.complexity,
-          agingScore:      score.agingScore,
-          llmReasoning:    score.llmReasoning,
-          confidence:      score.confidence,
-          lastScoredAt:    new Date(),
-          // Only set auto due date if none was provided manually
-          ...(!dueDate && { dueDate: autoDueDate }),
-        },
-      });
-    } catch (e) {
-      console.error("Auto-score (create) failed:", e);
-    }
+    TicketsService.queueBackgroundScoring(ticket, {
+      setAutoDueDate: true,
+      manualDueDate: dueDate,
+    });
+
     return prisma.tickets.findUnique({
       where: { id: ticket.id },
       include: ticketIncludes,
@@ -168,15 +203,32 @@ export class TicketsService {
 
   static async getUserTickets(userId: string, isAdmin: boolean = false) {
     try {
-      return await prisma.tickets.findMany({
-        where: isAdmin
-          ? {}
-          : {
-              OR: [{ createdBy: userId }, { client: { userId: userId } }],
-            },
-        orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
-        include: ticketListIncludes,
-      });
+      const accessFilter = isAdmin
+        ? {}
+        : { OR: [{ createdBy: userId }, { client: { userId: userId } }] };
+
+      // Unscored tickets (no score yet, or score still at its default of 0)
+      // are shown first so new urgent tickets aren't hidden until the
+      // hourly priorityRefresh cron job runs.
+      const unscoredFilter = { OR: [{ lastScoredAt: null }, { priorityScore: 0 }] };
+      const scoredFilter = {
+        AND: [{ lastScoredAt: { not: null } }, { priorityScore: { not: 0 } }],
+      };
+
+      const [unscored, scored] = await Promise.all([
+        prisma.tickets.findMany({
+          where: { AND: [accessFilter, unscoredFilter] },
+          orderBy: [{ createdAt: "desc" }],
+          include: ticketListIncludes,
+        }),
+        prisma.tickets.findMany({
+          where: { AND: [accessFilter, scoredFilter] },
+          orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
+          include: ticketListIncludes,
+        }),
+      ]);
+
+      return [...unscored, ...scored];
     } catch (error) {
       throw error;
     }
@@ -213,27 +265,9 @@ export class TicketsService {
       where: { id },
       data: updateData,
     });
-    try {
-      const score = await scoreTicket({
-        title: updated.title,
-        description: updated.description,
-        createdAt: updated.createdAt,
-      });
-      await prisma.tickets.update({
-        where: { id },
-        data: {
-          priorityScore:   score.priorityScore,
-          emotionScore:    score.emotion,
-          complexityScore: score.complexity,
-          agingScore:      score.agingScore,
-          llmReasoning:    score.llmReasoning,
-          confidence:      score.confidence,
-          lastScoredAt:    new Date(),
-        },
-      });
-    } catch (e) {
-      console.error("Auto-score (update) failed:", e);
-    }
+
+    TicketsService.queueBackgroundScoring(updated);
+
     return updated;
   }
 
@@ -244,10 +278,28 @@ export class TicketsService {
   }
 
   static async getAllTickets() {
-    return await prisma.tickets.findMany({
-      orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
-      include: ticketListIncludes,
-    });
+    // Unscored tickets (no score yet, or score still at its default of 0)
+    // are shown first so new urgent tickets aren't hidden until the
+    // hourly priorityRefresh cron job runs.
+    const unscoredFilter = { OR: [{ lastScoredAt: null }, { priorityScore: 0 }] };
+    const scoredFilter = {
+      AND: [{ lastScoredAt: { not: null } }, { priorityScore: { not: 0 } }],
+    };
+
+    const [unscored, scored] = await Promise.all([
+      prisma.tickets.findMany({
+        where: unscoredFilter,
+        orderBy: [{ createdAt: "desc" }],
+        include: ticketListIncludes,
+      }),
+      prisma.tickets.findMany({
+        where: scoredFilter,
+        orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
+        include: ticketListIncludes,
+      }),
+    ]);
+
+    return [...unscored, ...scored];
   }
 
   static async getTicketsCounts() {
@@ -370,46 +422,43 @@ export class TicketsService {
     }
     const userRole = await getUserRole(userId);
     const isAdmin = userRole === "super_admin" || userRole === "ticket_manager";
-    const queryOptions = {
-      orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
-      include: {
-        client: {
-          select: {
-            id: true,
-            companyName: true,
-            clientCode: true,
-            status: true,
-          },
-        },
-        owner: { select: { firstName: true, lastName: true, email: true } },
-        product: {
-          select: {
-            id: true,
-            name: true,
-            productCode: true,
-            status: true,
-            updatedAt: true,
-          },
-        },
-      },
-    };
-    const whereCondition: any = {};
+
+    let accessFilter: any = {};
     if (!isAdmin) {
       try {
         const client = await new ClientService().findClientByUserId(userId);
         if (!client || "error" in client) {
-          whereCondition.OR = [{ createdBy: userId }];
+          accessFilter = { OR: [{ createdBy: userId }] };
         } else {
-          whereCondition.OR = [{ createdBy: userId }, { clientId: client.id }];
+          accessFilter = { OR: [{ createdBy: userId }, { clientId: client.id }] };
         }
       } catch {
-        whereCondition.OR = [{ createdBy: userId }];
+        accessFilter = { OR: [{ createdBy: userId }] };
       }
     }
-    if (Object.keys(whereCondition).length > 0) {
-      (queryOptions as any).where = whereCondition;
-    }
-    return await TicketsService.getUserTicketsWithOptions(queryOptions);
+
+    // Unscored tickets (no score yet, or score still at its default of 0)
+    // are shown first so new urgent tickets aren't hidden until the
+    // hourly priorityRefresh cron job runs.
+    const unscoredFilter = { OR: [{ lastScoredAt: null }, { priorityScore: 0 }] };
+    const scoredFilter = {
+      AND: [{ lastScoredAt: { not: null } }, { priorityScore: { not: 0 } }],
+    };
+
+    const [unscored, scored] = await Promise.all([
+      prisma.tickets.findMany({
+        where: { AND: [accessFilter, unscoredFilter] },
+        orderBy: [{ createdAt: "desc" }],
+        include: ticketListIncludes,
+      }),
+      prisma.tickets.findMany({
+        where: { AND: [accessFilter, scoredFilter] },
+        orderBy: [{ priorityScore: "desc" }, { createdAt: "desc" }],
+        include: ticketListIncludes,
+      }),
+    ]);
+
+    return [...unscored, ...scored];
   }
 
   static async getAllTicketsControllerLogic(userId: string) {

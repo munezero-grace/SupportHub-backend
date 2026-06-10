@@ -1,0 +1,43 @@
+
+============================================================
+  THREE-WAY COMPARISON TABLE
+  Rule-Based  vs  ML (TF-IDF+LR)  vs  LLM (Groq)
+  Same locked test set -- 46 rows
+============================================================
+
+  Metric                     Rules          ML         LLM      Winner
+  ------------------------------------------------------------
+  Accuracy                   0.435       0.739       0.543          ML
+  Macro F1                   0.419       0.671       0.479          ML
+  Weighted F1                0.463       0.725       0.464          ML
+
+  Per-Class F1               Rules          ML         LLM      Winner
+  ------------------------------------------------------------
+  LOW                        0.571       0.933       0.897          ML
+  MEDIUM                     0.182       0.667       0.636          ML
+  HIGH                       0.316       0.286       0.385         LLM
+  CRITICAL                   0.609       0.800       0.000          ML
+
+============================================================
+  THESIS INTERPRETATION
+============================================================
+  Ranking by Macro F1:
+    1. ML             Macro F1 = 0.671  #############.......
+    2. LLM            Macro F1 = 0.479  ##########..........
+    3. Rule-based     Macro F1 = 0.419  ########............
+
+  ML vs Rule-based : +0.252  -- ML adds value beyond keyword matching
+  ML vs LLM        : +0.192  -- ML outperforms LLM on this dataset
+  LLM vs Rule-based: +0.060  -- LLM adds value beyond keyword matching
+
+  Key finding (CRITICAL class):
+    LLM F1=0.000 on CRITICAL reveals age-dependency in the scoring formula.
+    Without an age signal, priority_score never reaches the 0.80 threshold.
+    ML and rules are immune to this because they learn/match content directly.
+
+  Cost vs performance:
+    Rule-based -- <0.1ms, $0, no dependencies, fully explainable
+    ML         -- <1ms,   $0, no API, requires labeled training data
+    LLM        -- ~1-2s,  API cost per ticket, no training data needed
+============================================================
+

@@ -32,7 +32,6 @@ class SettingsService {
   static async getAdminSlackSettings() {
     const setting = await prisma.integrationSettings.findFirst({
       where: {
-        slackWebhookUrl: { not: "" },
         user: {
           deletedAt: null,
           userRoles: {
@@ -43,7 +42,33 @@ class SettingsService {
         },
       },
     });
-    return setting;
+
+    if (setting) {
+      if (!setting.slackWebhookUrl && process.env.SLACK_WEBHOOK_URL) {
+        return { ...setting, slackWebhookUrl: process.env.SLACK_WEBHOOK_URL };
+      }
+      return setting;
+    }
+
+    const envUrl = process.env.SLACK_WEBHOOK_URL;
+    if (!envUrl) return null;
+
+    const superAdmin = await prisma.users.findFirst({
+      where: {
+        deletedAt: null,
+        userRoles: { some: { role: { name: "super_admin" } } },
+      },
+      select: { id: true },
+    });
+    if (!superAdmin) return null;
+
+    return {
+      userId: superAdmin.id,
+      slackWebhookUrl: envUrl,
+      newTickets: true,
+      ticketAssignments: true,
+      statusChanges: true,
+    } as any;
   }
 
   static async updateSlackSettings(userId: string, data: any) {
