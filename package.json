@@ -15,6 +15,7 @@
     "eval:cleanup": "ts-node --transpile-only prisma/eval.ts --cleanup",
     "gold:generate": "ts-node --transpile-only prisma/generate-gold-candidates.ts",
     "gold:generate:high": "ts-node --transpile-only prisma/generate-high-candidates.ts",
+    "eval:spearman": "ts-node --transpile-only prisma/eval_spearman.ts",
     "gold:validate": "ts-node --transpile-only prisma/validate-gold-dataset.ts",
     "gold:split": "ts-node --transpile-only prisma/split-gold-dataset.ts",
     "prisma:generate": "npx prisma generate",
