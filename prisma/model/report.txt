@@ -5,7 +5,7 @@
 ============================================================
   Train set : 180 rows  (train.csv)
   Test set  : 46 rows  (locked — test.csv)
-  Features  : TF-IDF, max 10 000 terms, sublinear_tf=True
+  Features  : TF-IDF, max 3,000 terms, min_df=2, max_df=0.95, sublinear_tf=True
   Model     : LogisticRegression, C=1.0, balanced weights
 
   Accuracy

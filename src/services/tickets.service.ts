@@ -69,12 +69,18 @@ export class TicketsService {
           createdAt: ticket.createdAt,
         });
 
+        const LOW_CONFIDENCE_THRESHOLD = 0.5;
+        const llmReasoning =
+          score.confidence < LOW_CONFIDENCE_THRESHOLD
+            ? `⚠️ Low confidence — recommend manual review. ${score.llmReasoning}`
+            : score.llmReasoning;
+
         const data: Record<string, unknown> = {
           priorityScore:   score.priorityScore,
           emotionScore:    score.emotion,
           complexityScore: score.complexity,
           agingScore:      score.agingScore,
-          llmReasoning:    score.llmReasoning,
+          llmReasoning,
           confidence:      score.confidence,
           lastScoredAt:    new Date(),
         };

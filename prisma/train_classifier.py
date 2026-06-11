@@ -149,7 +149,11 @@ def main():
         out.append(LINE)
         out.append(f"  Train set : {len(X_train)} rows  ({args.train})")
         out.append(f"  Test set  : {len(X_test)} rows  (locked — test.csv)")
-        out.append(f"  Features  : TF-IDF, max 10 000 terms, sublinear_tf=True")
+        tfidf = pipeline.named_steps["tfidf"]
+        out.append(
+            f"  Features  : TF-IDF, max {tfidf.max_features:,} terms, "
+            f"min_df={tfidf.min_df}, max_df={tfidf.max_df}, sublinear_tf={tfidf.sublinear_tf}"
+        )
         out.append(f"  Model     : LogisticRegression, C=1.0, balanced weights")
         out.append("")
 
