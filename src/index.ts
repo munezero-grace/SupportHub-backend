@@ -26,9 +26,16 @@ console.log(
 
 const app = express();
 
+const corsOrigin = process.env.CORS_ORIGIN || "*";
+if (process.env.NODE_ENV === "production" && corsOrigin === "*") {
+  console.warn(
+    "[cors] WARNING: CORS_ORIGIN is not set in production — allowing all origins. Set CORS_ORIGIN to your frontend URL.",
+  );
+}
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: corsOrigin,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   }),

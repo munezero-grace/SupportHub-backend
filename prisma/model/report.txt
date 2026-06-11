@@ -3,55 +3,55 @@
   ML Classifier — Evaluation Report
   TF-IDF (1-2 gram) + Logistic Regression
 ============================================================
-  Train set : 180 rows  (train.csv)
-  Test set  : 46 rows  (locked — test.csv)
+  Train set : 419 rows  (train.csv)
+  Test set  : 104 rows  (locked — test.csv)
   Features  : TF-IDF, max 3,000 terms, min_df=2, max_df=0.95, sublinear_tf=True
   Model     : LogisticRegression, C=1.0, balanced weights
 
   Accuracy
   --------------------------------------------------
-  Train accuracy : 0.950   (sanity check — not reported)
-  Test  accuracy : 0.761
+  Train accuracy : 0.986   (sanity check — not reported)
+  Test  accuracy : 0.875
 
   F1 Scores (test set)
   --------------------------------------------------
-  Macro F1    : 0.714   ##############......
-  Weighted F1 : 0.758   ###############.....
+  Macro F1    : 0.873   #################...
+  Weighted F1 : 0.874   #################...
 
   Per-Class F1
   --------------------------------------------------
-  LOW         F1=0.933  ###################.  (n=14)
-  MEDIUM      F1=0.625  ############........  (n=9)
-  HIGH        F1=0.471  #########...........  (n=8)
-  CRITICAL    F1=0.828  #################...  (n=15)
+  LOW         F1=0.893  ##################..  (n=28)
+  MEDIUM      F1=0.837  #################...  (n=23)
+  HIGH        F1=0.875  ##################..  (n=23)
+  CRITICAL    F1=0.885  ##################..  (n=30)
 
   Confusion Matrix
   --------------------------------------------------
   Rows = actual label,  Cols = predicted label
 
                  LOW    MEDIUM      HIGH  CRITICAL
-  LOW             14         0         0         0
-  MEDIUM           1         5         3         0
-  HIGH             0         2         4         2
-  CRITICAL         1         0         2        12
+  LOW             25         2         1         0
+  MEDIUM           3        18         0         2
+  HIGH             0         0        21         2
+  CRITICAL         0         0         3        27
 
   Full Classification Report
   --------------------------------------------------
                 precision    recall  f1-score   support
   
-           LOW      0.875     1.000     0.933        14
-        MEDIUM      0.714     0.556     0.625         9
-          HIGH      0.444     0.500     0.471         8
-      CRITICAL      0.857     0.800     0.828        15
+           LOW      0.893     0.893     0.893        28
+        MEDIUM      0.900     0.783     0.837        23
+          HIGH      0.840     0.913     0.875        23
+      CRITICAL      0.871     0.900     0.885        30
   
-      accuracy                          0.761        46
-     macro avg      0.723     0.714     0.714        46
-  weighted avg      0.763     0.761     0.758        46
+      accuracy                          0.875       104
+     macro avg      0.876     0.872     0.873       104
+  weighted avg      0.876     0.875     0.874       104
 
 ============================================================
   VERDICT
 ============================================================
-  Macro F1 = 0.714  [GOOD]
+  Macro F1 = 0.873  [EXCELLENT]
   [PASS]  Classifier is competitive -- include in thesis comparison.
 ============================================================
 
