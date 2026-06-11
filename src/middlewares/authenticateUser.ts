@@ -23,17 +23,26 @@ export async function authenticateUser(
         const secret = process.env.JWT_SECRET || "testsecret";
         const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
 
-        // Block explicitly deactivated accounts
+        // Block explicitly deactivated accounts and enforce mandatory password change
         if (decoded.id) {
             const user = await prisma.users.findUnique({
                 where: { id: decoded.id },
-                select: { deletedAt: true }
+                select: { deletedAt: true, hasChangedPassword: true }
             });
             if (user?.deletedAt) {
                 return res.status(403).json({
                     status: "error",
                     message: ERROR_MESSAGES.ACCOUNT_DEACTIVATED,
                     code: 'ACCOUNT_DEACTIVATED'
+                });
+            }
+
+            const isChangePasswordRoute = req.originalUrl.includes("/auth/change-password");
+            if (user && !user.hasChangedPassword && !isChangePasswordRoute) {
+                return res.status(403).json({
+                    status: "error",
+                    message: ERROR_MESSAGES.PASSWORD_CHANGE_REQUIRED,
+                    code: 'PASSWORD_CHANGE_REQUIRED'
                 });
             }
         }

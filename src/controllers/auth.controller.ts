@@ -24,7 +24,13 @@ class AuthController {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.users.create({
-      data: { firstName, lastName, email, password: hashedPassword },
+      data: {
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        hasChangedPassword: true, // user chose their own password at signup
+      },
       select: userSelectFields,
     });
 
@@ -206,6 +212,7 @@ class AuthController {
             lastName,
             provider,
             providerId,
+            hasChangedPassword: true, // OAuth users have no password to change
           },
           select: {
             ...userSelectFields,

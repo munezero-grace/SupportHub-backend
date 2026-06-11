@@ -2,6 +2,7 @@ export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid credentials.",
   USER_ALREADY_EXISTS: "User already exists.",
   ACCOUNT_DEACTIVATED: "Your account has been deactivated. Please contact support.",
+  PASSWORD_CHANGE_REQUIRED: "You must change your password before continuing.",
   ROLE_NOT_FOUND: "Role not found",
   ASSIGN_ROLE_ERROR: "Error assigning role.",
   SIGNUP_FAILED: "Signup failed.",
