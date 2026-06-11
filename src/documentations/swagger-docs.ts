@@ -157,7 +157,7 @@ const swaggerDocument = {
       get: {
         summary: "Get tickets ranked by priority score",
         description:
-          "Returns all open tickets sorted by AI-computed priority score (highest first). Each ticket includes priorityScore (0–1) and lastScoredAt timestamp.",
+          "Returns all open tickets sorted by AI-computed priority score (highest first). Each ticket includes priorityScore (0–1) and lastScoredAt timestamp. Restricted to Admin and Ticket Manager roles.",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
@@ -204,6 +204,7 @@ const swaggerDocument = {
             },
           },
           "401": { description: "Unauthorized" },
+          "403": { description: "Forbidden: requires Admin or Ticket Manager role" },
         },
       },
     },

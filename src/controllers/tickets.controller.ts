@@ -104,10 +104,16 @@ class TicketsController {
     try {
       const user = req.user;
       const { id } = req.params;
+      const files = Array.isArray(req.files)
+        ? req.files
+        : req.files
+          ? [req.files]
+          : [];
       const result = await TicketsService.updateTicketWithValidation(
         user,
         id,
         req.body,
+        files,
       );
       return handleServiceResult(
         res,

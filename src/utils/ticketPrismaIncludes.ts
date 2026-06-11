@@ -23,6 +23,7 @@ export const ticketIncludes = {
 };
 
 export const ticketListIncludes = {
+    TicketAttachments: true,
     client: {
         select: {
             id: true,

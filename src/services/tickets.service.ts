@@ -489,7 +489,7 @@ export class TicketsService {
     return { data: counts };
   }
 
-  static async updateTicketWithValidation(user: any, id: string, body: any) {
+  static async updateTicketWithValidation(user: any, id: string, body: any, files?: any) {
     try {
       if (user && (user.role === "client" || user.role === "user")) {
         return { error: ERROR_MESSAGES.UNAUTHORIZED, status: 403 };
@@ -518,12 +518,26 @@ export class TicketsService {
         }
         updateData.priority = priority;
       }
-      if (Object.keys(updateData).length === 0) {
+      const hasNewFiles = Array.isArray(files) && files.length > 0;
+      if (Object.keys(updateData).length === 0 && !hasNewFiles) {
         return { error: ERROR_MESSAGES.NO_VALID_FIELDS_TO_UPDATE, status: 400 };
       }
       try {
         const oldTicket = await TicketsService.getTicketById(id);
-        const ticket = await TicketsService.updateTicket(id, updateData);
+
+        if (hasNewFiles) {
+          const imageUrls = await uploadTicketFiles(files);
+          for (const url of imageUrls) {
+            await prisma.ticketAttachment.create({
+              data: { ticketId: id, fileUrl: url },
+            });
+          }
+        }
+
+        const ticket =
+          Object.keys(updateData).length > 0
+            ? await TicketsService.updateTicket(id, updateData)
+            : await TicketsService.getTicketById(id);
 
         if ("status" in body) {
           try {

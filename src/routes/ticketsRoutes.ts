@@ -9,9 +9,28 @@ import {
 } from "../validations/ticket.validation";
 import { WrapAsync } from "../middlewares/wrapAsync";
 import { authenticateUser } from "../middlewares/authenticateUser";
+import { requireRole } from "../middlewares/requireRole";
 
 const router = Router();
-const upload = multer({ dest: "uploads/" });
+
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+];
+
+const upload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per file
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      return cb(new Error("Only image (JPEG, PNG, GIF, WEBP) and PDF files are allowed"));
+    }
+    cb(null, true);
+  },
+});
 
 router.post(
   "/",
@@ -38,6 +57,7 @@ router.get(
 router.get(
   "/ranked",
   WrapAsync(authenticateUser),
+  WrapAsync(requireRole("super_admin", "ticket_manager")),
   WrapAsync(TicketsController.getRankedTickets),
 );
 router.get(
